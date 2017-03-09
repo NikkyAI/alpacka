@@ -1,0 +1,18 @@
+{
+  "version": "0.1.0",
+  "command": "dotnet",
+  "isShellCommand": true,
+  "args": [ ],
+  "tasks": [{
+    "taskName": "build",
+    "isBuildCommand": true,
+    "showOutput": "always",
+    "problemMatcher": "$msCompile"
+  }, {
+    "taskName": "test",
+    "args": [ "test/GitMC.Test/GitMC.Test.csproj" ],
+    "isTestCommand": true,
+    "showOutput": "always",
+    "problemMatcher": "$msCompile"
+  }]
+}
