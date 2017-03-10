@@ -7,6 +7,9 @@ namespace GitMC.Test
 {
     public class Tests
     {
+        public static readonly String CONFIG_FILE = "packconfig.yaml";
+        public static readonly String BUILD_FILE  = "packbuild.json";
+        
         public Tests()
         {
             // Find the workspace root directory by searching for the "gitmc.sln" file.
@@ -24,9 +27,11 @@ namespace GitMC.Test
         }
         
         [Fact]
-        public void LoadConfig()
+        public void LoadConfigSaveBuild()
         {
-            ModpackConfig.Load("packconfig.yaml");
+            var config = ModpackConfig.Load(CONFIG_FILE);
+            var build  = new ModpackBuild(config);
+            build.Save(BUILD_FILE, pretty: true);
         }
     }
 }

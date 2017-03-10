@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace GitMC.Lib.Config
 {
@@ -34,9 +35,14 @@ namespace GitMC.Lib.Config
         }
         
         
-        public void Save(string path)
+        public void Save(string path, bool pretty = false)
         {
-            var json = JsonConvert.SerializeObject(this, Formatting.Indented);
+            var settings = new JsonSerializerSettings {
+                Formatting = (pretty ? Formatting.Indented : Formatting.None),
+                NullValueHandling = NullValueHandling.Ignore,
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
+            };
+            var json = JsonConvert.SerializeObject(this, settings);
             File.WriteAllText(path, json);
         }
     }
