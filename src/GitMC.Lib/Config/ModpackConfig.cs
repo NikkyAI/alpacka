@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
-using System.Linq;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using YamlDotNet.Serialization.NodeDeserializers;
@@ -39,34 +38,41 @@ namespace GitMC.Lib.Config
                                       s => s.InsteadOf<ObjectNodeDeserializer>())
                 .Build();
             
-            using (var reader = new StreamReader(File.OpenRead(path))) {
-                var config = deserializer.Deserialize<ModpackConfig>(reader);
-                
-                foreach (var mod in config.Mods) {
-                    // Move @version from source to Version property.
-                    {
-                        var index = mod.Source.LastIndexOf('@');
-                        if (index != -1) {
-                            var newSource  = mod.Source.Substring(0, index);
-                            var newVersion = mod.Source.Substring(index + 1);
-                            if (mod.Version != null)
-                                throw new Exception($"Mod '{ mod.Name ?? mod.Source }' has both @version ({ newVersion })" +
-                                                    $"and version property ({ mod.Version }) defined.");
-                            mod.Source  = newSource;
-                            mod.Version = newVersion;
-                        }
-                    }
-                    
-                    // TODO: Do this later when mod name is resolved.
-                    // Replace "true" feature with mod name.
-                    {
-                        var index = mod.Feature.IndexOf("true");
-                        if (index != -1) mod.Feature[index] = mod.Name;
-                    }
-                }
-                
-                return config;
+            ModpackConfig config;
+            using (var reader = new StreamReader(File.OpenRead(path)))
+                config = deserializer.Deserialize<ModpackConfig>(reader);
+            
+            foreach (var mod in config.Mods) {
+                ExtractSourceVersion(mod);
+                ReplaceAutoFeature(mod); // TODO: Do this later when mod name is resolved.
             }
+            
+            return config;
+        }
+        
+        /// <summary> Extract @version information from mod.Source to mod.Version, if present. </summary>
+        private static void ExtractSourceVersion(EntryMod mod)
+        {
+            var index = mod.Source.LastIndexOf('@');
+            if (index == -1) return;
+            
+            var newSource  = mod.Source.Substring(0, index);
+            var newVersion = mod.Source.Substring(index + 1);
+            
+            if (mod.Version != null)
+                throw new Exception($"Mod '{ mod.Name ?? mod.Source }' has both @version ({ newVersion })" +
+                                    $"and version property ({ mod.Version }) defined.");
+            
+            mod.Source  = newSource;
+            mod.Version = newVersion;
+        }
+        
+        /// <summary> Replaces a feature with the exact name of "true" with mod.Name, if present.
+        ///           Allows specifying "feature: true" to automatically create a feature with the mod's name. </summary>
+        private static void ReplaceAutoFeature(EntryMod mod)
+        {
+            var index = mod.Feature.IndexOf("true");
+            if (index != -1) mod.Feature[index] = mod.Name;
         }
     }
 }
