@@ -1,0 +1,48 @@
+name: Copy Pack
+description: Nikky doesn't know how to spell "copy"
+links:
+  website: http://anarchy.moe/projects/gitmc/
+  source: https://github.com/NikkyAI/gitmc
+  issues: https://github.com/NikkyAI/gitmc/issues
+version: "1.0.0"
+authors: [ Nikky, copygirl ]
+mcVersion: "1.11.2"
+
+defaults:
+  version: recommended
+  # Possible values: recommended, latest, dev.
+  # On curse, maps to release, beta, alpha?
+  # On github, maps to release, pre-release, (none).
+
+mods:
+  - name: Wearable Backpacks
+    description: Minecraft mod which adds beautiful, balanced backpacks
+    links:
+      website: https://github.com/copygirl/WearableBackpacks
+      source: https://github.com/copygirl/WearableBackpacks
+      issues: https://github.com/copygirl/WearableBackpacks/issues # Can be figured out automatically from source.
+    version: "2.3.0"
+    src: https://github.com/copygirl/WearableBackpacks/releases/download/v2.3.0/WearableBackpacks-1.11.2-2.3.0.jar
+    feature: [ Some Feature ] # If string, finds or creates feature with that name.
+  - name: Hardcore Darkness
+    src: ...
+    feature: [ Hardcore Darkness ] # If true, uses name as feature.
+
+features:
+  - name: Some Feature # Stored in "features/Some Feature/"
+    description: 
+    selected: true # Whether feature is selected by default
+    recommendation: null # For example "recommended", "avoid", "trash#220000"
+    conflicts: # Could also conflict with a group
+      - <other feature>
+
+feature-groups:
+  - name: Difficulty # Stored in "features/Difficulty/"
+    features:
+      - name: Easy # Stored in "features/Difficulty/Easy/"
+        conflicts:
+          - Hardcore Darkness
+      - name: Normal # Stored in "features/Difficulty/Normal/"
+        selected: true
+      - name: Hard # Stored in "features/Difficulty/Hard/"
+        recommendation: avoid

@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using Xunit;
-using GitMC.Lib;
+using GitMC.Lib.Config;
 
 namespace GitMC.Test
 {
