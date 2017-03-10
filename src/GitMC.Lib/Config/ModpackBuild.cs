@@ -32,6 +32,9 @@ namespace GitMC.Lib.Config
             Links        = config.Links;
             Authors      = config.Authors;
             Contributors = config.Contributors;
+            
+            // TODO: This will eventually be replaced by proper mod handling / resolving etc.
+            Mods = config.Mods;
         }
         
         

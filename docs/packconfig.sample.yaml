@@ -10,9 +10,7 @@ mcVersion: "1.11.2"
 
 defaults:
   version: recommended
-  # Possible values: recommended, latest, dev.
-  # On curse, maps to release, beta, alpha?
-  # On github, maps to release, pre-release, (none).
+  # Possible values: recommended, latest
 
 mods:
   - name: Wearable Backpacks
@@ -23,10 +21,11 @@ mods:
       issues: https://github.com/copygirl/WearableBackpacks/issues # Can be figured out automatically from source.
     version: "2.3.0"
     src: https://github.com/copygirl/WearableBackpacks/releases/download/v2.3.0/WearableBackpacks-1.11.2-2.3.0.jar
-    feature: [ Some Feature ] # If string, finds or creates feature with that name.
+    feature: Some Feature # If string, finds or creates feature with that name.
   - name: Hardcore Darkness
     src: ...
-    feature: [ Hardcore Darkness ] # If true, uses name as feature.
+    feature: true # If true, uses name as feature.
+  - Open Computers@latest
 
 features:
   - name: Some Feature # Stored in "features/Some Feature/"
