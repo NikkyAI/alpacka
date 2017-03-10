@@ -8,7 +8,7 @@
     <AssemblyName>GitMC.CLI</AssemblyName>
     <OutputType>Exe</OutputType>
     <PackageId>GitMC.CLI</PackageId>
-    <PackageTargetFallback>$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
+    <PackageTargetFallback>$(PackageTargetFallback);dotnet5.4;portable-net451+win8</PackageTargetFallback>
     <RuntimeFrameworkVersion>1.1.1</RuntimeFrameworkVersion>
   </PropertyGroup>
 

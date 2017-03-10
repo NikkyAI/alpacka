@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <VersionPrefix>0.0.1</VersionPrefix>
@@ -7,6 +7,7 @@
     <DebugType>portable</DebugType>
     <AssemblyName>GitMC.Lib</AssemblyName>
     <PackageId>GitMC.Lib</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback);dotnet5.4;portable-net451+win8</PackageTargetFallback>
     <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
   </PropertyGroup>
 
