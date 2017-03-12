@@ -39,6 +39,7 @@ namespace GitMC.Lib.Mods
             public EntryMod Mod { get; }
             public IModSource Source { get; }
             public string TempPath { get; private set; }
+            public MCModInfo ModInfo { get; private set; }
             
             public ModWrapper(EntryMod mod, IModSource source)
                 { Mod = mod; Source = source; }
@@ -49,9 +50,14 @@ namespace GitMC.Lib.Mods
             public async Task Download()
             {
                 TempPath = Path.GetTempFileName();
-                using (var fileStream = File.OpenWrite(TempPath))
-                    await Source.Download(Mod, fileStream);
+                using (var writeStream = File.OpenWrite(TempPath))
+                    await Source.Download(Mod, writeStream);
                 Console.WriteLine($"Downloaded '{ Mod.Name ?? Mod.Source }' to { TempPath }");
+                
+                using (var readStream = File.OpenRead(TempPath))
+                    ModInfo = await MCModInfo.Extract(readStream);
+                var modInfo = ModInfo.ModList[0];
+                Console.WriteLine($"Extracted mod info :: Name: { modInfo.Name } - Version: { modInfo.Version }");
             }
         }
         
