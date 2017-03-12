@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using GitMC.Lib.Config;
 
@@ -50,10 +51,19 @@ namespace GitMC.Lib.Mods
             public async Task Download()
             {
                 TempPath = Path.GetTempFileName();
-                using (var writeStream = File.OpenWrite(TempPath))
+                var md5 = new MD5Transform();
+                using (var writeStream = new CryptoStream(File.OpenWrite(TempPath), md5, CryptoStreamMode.Write))
                     await Source.Download(Mod, writeStream);
-                Console.WriteLine($"Downloaded '{ Mod.Name ?? Mod.Source }' to { TempPath }");
+                var hash = BitConverter.ToString(md5.Hash).Replace("-", "").ToLowerInvariant();
+                Console.WriteLine($"Downloaded '{ Mod.Name ?? Mod.Source }' to { TempPath } (MD5: { hash })");
                 
+                if ((Mod.MD5 != null) && !string.Equals(Mod.MD5, hash, StringComparison.OrdinalIgnoreCase))
+                    throw new DownloaderException($"MD5 hash of '{ Mod.Source }' ({ hash }) does not match provided MD5 hash ({ Mod.MD5 }) in config");
+                else Mod.MD5 = hash;
+            }
+            
+            public async Task ExtractModInfo()
+            {
                 using (var readStream = File.OpenRead(TempPath))
                     ModInfo = await MCModInfo.Extract(readStream);
                 var modInfo = ModInfo.ModList[0];
