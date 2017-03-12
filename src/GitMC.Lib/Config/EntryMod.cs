@@ -21,6 +21,12 @@ namespace GitMC.Lib.Config
         public static implicit operator EntryMod(string value) =>
             new EntryMod { Source = value };
         
+        [YamlIgnore, JsonIgnore]
+        public string Scheme { get {
+            var index = Source.IndexOf(':');
+            return (index >= 0) ? Source.Substring(0, index) : null;
+        } }
+        
         
         public class EntryFeature : List<string> {
             

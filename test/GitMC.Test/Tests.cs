@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Xunit;
 using GitMC.Lib.Config;
+using GitMC.Lib.Mods;
 
 namespace GitMC.Test
 {
@@ -32,6 +33,14 @@ namespace GitMC.Test
             var config = ModpackConfig.Load(CONFIG_FILE);
             var build  = new ModpackBuild(config);
             build.Save(BUILD_FILE, pretty: true);
+        }
+        
+        [Fact]
+        public async void LoadConfigDownloadMods()
+        {
+            var config     = ModpackConfig.Load(CONFIG_FILE);
+            var downloader = new ModpackDownloader(config){ new ModSourceURL() };
+            await downloader.ResolveAndDownload();
         }
     }
 }
