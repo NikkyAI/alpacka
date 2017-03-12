@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <VersionPrefix>0.0.1</VersionPrefix>
+    <AssemblyName>GitMC.CLI</AssemblyName>
+    <PackageId>GitMC.CLI</PackageId>
     <Authors>copygirl;Nikky</Authors>
+    <VersionPrefix>0.0.1</VersionPrefix>
     <TargetFramework>netcoreapp1.1</TargetFramework>
     <DebugType>portable</DebugType>
-    <AssemblyName>GitMC.CLI</AssemblyName>
     <OutputType>Exe</OutputType>
-    <PackageId>GitMC.CLI</PackageId>
-    <PackageTargetFallback>$(PackageTargetFallback);dotnet5.4;portable-net451+win8</PackageTargetFallback>
+    <PackageTargetFallback>$(PackageTargetFallback);portable-net451</PackageTargetFallback>
     <RuntimeFrameworkVersion>1.1.1</RuntimeFrameworkVersion>
   </PropertyGroup>
 

@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <VersionPrefix>0.0.1</VersionPrefix>
-    <Authors>copygirl;Nikky</Authors>
-    <TargetFramework>netstandard1.6</TargetFramework>
-    <DebugType>portable</DebugType>
     <AssemblyName>GitMC.Lib</AssemblyName>
     <PackageId>GitMC.Lib</PackageId>
-    <PackageTargetFallback>$(PackageTargetFallback);dotnet5.4;portable-net451+win8</PackageTargetFallback>
+    <Authors>copygirl;Nikky</Authors>
+    <VersionPrefix>0.0.1</VersionPrefix>
+    <TargetFramework>netstandard1.6</TargetFramework>
+    <DebugType>portable</DebugType>
+    <PackageTargetFallback>$(PackageTargetFallback);portable-net451</PackageTargetFallback>
     <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
   </PropertyGroup>
 
