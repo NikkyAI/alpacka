@@ -11,5 +11,9 @@
     <PackageTargetFallback>$(PackageTargetFallback);portable-net451</PackageTargetFallback>
     <RuntimeFrameworkVersion>1.1.1</RuntimeFrameworkVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DevZH.UI" Version="1.0.0-alpha-2801-pre0" />
+  </ItemGroup>
   
 </Project>

@@ -1,13 +1,25 @@
-using System;
+using DevZH.UI;
 
-namespace Alpacka.CLI
+namespace Alpacka.GUI
 {
-    public static class Program
+    public class Program : Window
     {
-        public static void Main(string[] args)
+        public static void Main(string[] args) =>
+            new Application().Run(new Program());
+        
+        public Program() : base("Alpacka GUI")
         {
-            Console.WriteLine("Hello from alpacka GUI!");
-            throw new NotImplementedException();
+            var tab = new Tab();
+            this.Child = tab;
+            
+            var basicControlsPage = new BasicControlsPage("Basic Controls") { AllowMargins = true };
+            tab.Children.Add(basicControlsPage);
+            
+            var numbersPage = new NumbersPage("Numbers and Lists") { AllowMargins = true };
+            tab.Children.Add(numbersPage);
+            
+            var dataChoosersPage = new DataChoosersPage("Data Choosers") { AllowMargins = true };
+            tab.Children.Add(dataChoosersPage);
         }
     }
 }
