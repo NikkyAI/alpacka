@@ -21,7 +21,7 @@ namespace GitMC.Lib.Mods
         
         public void Add(IModSource source) => _sources.Add(source);
         
-        public async Task ResolveAndDownload()
+        public async Task Run()
         {
             var mods = _config.Mods.Select(mod =>
                 new ModWrapper(mod, _sources.Find(source =>
@@ -33,6 +33,7 @@ namespace GitMC.Lib.Mods
             
             await Task.WhenAll(mods.Select(mod => mod.Resolve(_config.MinecraftVersion, this)));
             await Task.WhenAll(mods.Select(mod => mod.Download()));
+            await Task.WhenAll(mods.Select(mod => mod.ExtractModInfo()));
         }
         
         private class ModWrapper
@@ -55,7 +56,7 @@ namespace GitMC.Lib.Mods
                 using (var writeStream = new CryptoStream(File.OpenWrite(TempPath), md5, CryptoStreamMode.Write))
                     await Source.Download(Mod, writeStream);
                 var hash = BitConverter.ToString(md5.Hash).Replace("-", "").ToLowerInvariant();
-                Console.WriteLine($"Downloaded '{ Mod.Name ?? Mod.Source }' to { TempPath } (MD5: { hash })");
+                Console.WriteLine($"Downloaded '{ Mod.Source }' to { TempPath } (MD5: { hash })");
                 
                 if ((Mod.MD5 != null) && !string.Equals(Mod.MD5, hash, StringComparison.OrdinalIgnoreCase))
                     throw new DownloaderException($"MD5 hash of '{ Mod.Source }' ({ hash }) does not match provided MD5 hash ({ Mod.MD5 }) in config");
@@ -66,8 +67,12 @@ namespace GitMC.Lib.Mods
             {
                 using (var readStream = File.OpenRead(TempPath))
                     ModInfo = await MCModInfo.Extract(readStream);
-                var modInfo = ModInfo.ModList[0];
-                Console.WriteLine($"Extracted mod info :: Name: { modInfo.Name } - Version: { modInfo.Version }");
+                if (Mod.Name == null) Mod.Name = ModInfo.Name;
+                if (Mod.Description == null) Mod.Description = ModInfo.Description;
+                if (Mod.Version == null) Mod.Version = ModInfo.Version;
+                if ((Mod.Links == null) && !string.IsNullOrEmpty(ModInfo.URL))
+                    Mod.Links = new EntryLinks { Website = ModInfo.URL };
+                Console.WriteLine($"Extracted mod info :: Name: { ModInfo.Name } - Version: { ModInfo.Version }");
             }
         }
         

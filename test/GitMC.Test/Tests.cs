@@ -28,19 +28,13 @@ namespace GitMC.Test
         }
         
         [Fact]
-        public void LoadConfigSaveBuild()
-        {
-            var config = ModpackConfig.Load(CONFIG_FILE);
-            var build  = new ModpackBuild(config);
-            build.Save(BUILD_FILE, pretty: true);
-        }
-        
-        [Fact]
-        public async void LoadConfigDownloadMods()
+        public async void LoadDownloadBuild()
         {
             var config     = ModpackConfig.Load(CONFIG_FILE);
             var downloader = new ModpackDownloader(config){ new ModSourceURL() };
-            await downloader.ResolveAndDownload();
+            await downloader.Run();
+            var build = new ModpackBuild(config);
+            build.Save(BUILD_FILE, pretty: true);
         }
     }
 }
