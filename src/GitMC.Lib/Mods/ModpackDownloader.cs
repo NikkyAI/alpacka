@@ -24,14 +24,14 @@ namespace GitMC.Lib.Mods
         public async Task ResolveAndDownload()
         {
             var mods = _config.Mods.Select(mod =>
-                new ModWrapper(mod, _sources.Find(source => source.CanHandle(mod.Scheme))));
+                new ModWrapper(mod, _sources.Find(source =>
+                    source.CanHandle(mod.Scheme)))).ToList();
             
             // See if any if the mods don't have a mod source handler.
             var noSources = mods.Where(mod => (mod.Source == null)).Select(mod => mod.Mod).ToList();
             if (noSources.Count > 0) throw new NoSourceHandlerException(noSources);
             
             await Task.WhenAll(mods.Select(mod => mod.Resolve(_config.MinecraftVersion, this)));
-            
             await Task.WhenAll(mods.Select(mod => mod.Download()));
         }
         
