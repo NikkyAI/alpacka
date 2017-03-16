@@ -36,7 +36,8 @@ namespace GitMC.Lib.Mods
         {
             var zip   = new ZipFile(modFileStream);
             var entry = zip.GetEntry("mcmod.info");
-            if (entry == null) throw new Exception("mcmod.info could not be found in mod archive");
+            if (entry == null) throw new MCModInfoException(
+                "mcmod.info could not be found in mod archive");
             
             string modInfo;
             using (var reader = new StreamReader(zip.GetInputStream(entry)))
@@ -48,15 +49,29 @@ namespace GitMC.Lib.Mods
             List<MCModInfo> infos = (modInfo[0] == '{')
                 ? JsonConvert.DeserializeObject<InfoList>(modInfo, settings).ModList // New format
                 : JsonConvert.DeserializeObject<List<MCModInfo>>(modInfo, settings); // Old format
-            if (infos == null) throw new Exception("mcmod.info doesn't contain a 'modList' entry");
-            if (infos.Count == 0) throw new Exception("mcmod.info contains 0 mod info entries");
-            return infos[0];
+                
+            if (infos == null) throw new MCModInfoException("Missing 'modList' entry");
+            if (infos.Count == 0) throw new MCModInfoException("No mod entries");
+            var info = infos[0];
+            if (info.ModID == null) throw new MCModInfoException("Missing 'modid' field");
+            if (info.Name == null) throw new MCModInfoException("Missing 'name' field");
+            if (info.Version == null) throw new MCModInfoException("Missing 'version' field");
+            
+            return info;
         }
         
         public class InfoList
         {
             public int ModListVersion { get; set; }
             public List<MCModInfo> ModList { get; set; }
+        }
+        
+        public class MCModInfoException : Exception
+        {
+            public MCModInfoException(string message)
+                : base(message) {  }
+            public MCModInfoException(string message, Exception innerException)
+                : base(message, innerException) {  }
         }
     }
 }

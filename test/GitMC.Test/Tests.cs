@@ -10,6 +10,7 @@ namespace GitMC.Test
     {
         public static readonly String CONFIG_FILE = "packconfig.yaml";
         public static readonly String BUILD_FILE  = "packbuild.json";
+        public static readonly String MODS_FOLDER  = "mods/";
         
         public Tests()
         {
@@ -30,9 +31,20 @@ namespace GitMC.Test
         [Fact]
         public async void LoadDownloadBuild()
         {
-            var config     = ModpackConfig.Load(CONFIG_FILE);
+            var config = ModpackConfig.Load(CONFIG_FILE);
+            
             var downloader = new ModpackDownloader(config){ new ModSourceURL() };
-            await downloader.Run();
+            var downloaded = await downloader.Run();
+            
+            if (Directory.Exists(MODS_FOLDER))
+                Directory.Delete(MODS_FOLDER, true);
+            Directory.CreateDirectory(MODS_FOLDER);
+            
+            // TODO: Use original downloaded file name.
+            foreach (var downloadedMod in downloaded)
+                File.Move(downloadedMod.TempPath, Path.Combine(MODS_FOLDER,
+                    (downloadedMod.FileName ?? $"{ downloadedMod.Mod.Name }-{ downloadedMod.Mod.Version }.jar")));
+            
             var build = new ModpackBuild(config);
             build.Save(BUILD_FILE, pretty: true);
         }

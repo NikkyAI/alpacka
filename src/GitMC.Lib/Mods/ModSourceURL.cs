@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -12,13 +13,26 @@ namespace GitMC.Lib.Mods
         public bool CanHandle(string scheme) =>
             ((scheme == "http") || (scheme == "https"));
         
-        public Task Resolve(EntryMod mod, string mcVersion, IDependencyHandler dependencies) =>
+        public Task Resolve(EntryMod mod, string mcVersion, Action<EntryMod> addDependency) =>
             Task.CompletedTask;
         
-        public async Task Download(EntryMod mod, Stream destination)
+        public async Task<string> Download(EntryMod mod, Stream destination)
         {
-            using (var source = await _client.GetStreamAsync(mod.Source))
-                await source.CopyToAsync(destination);
+            var response = await _client.GetAsync(mod.Source);
+            response.EnsureSuccessStatusCode();
+            await response.Content.CopyToAsync(destination);
+            // Try using suggested file name or getting the it from the request uri.
+            return response.Content.Headers.ContentDisposition?.FileNameStar
+                       ?? response.Content.Headers.ContentDisposition?.FileName
+                       ?? GetFilenameFromUri(response.RequestMessage.RequestUri);
+        }
+        private static string GetFilenameFromUri(Uri uri)
+        {
+            try {
+                var filename = Path.GetFileName(uri.ToString());
+                if (!filename.EndsWith(".jar")) return null;
+                return filename;
+            } catch { return null; }
         }
     }
 }
