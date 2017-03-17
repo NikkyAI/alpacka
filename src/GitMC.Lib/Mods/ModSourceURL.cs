@@ -10,8 +10,8 @@ namespace GitMC.Lib.Mods
     {
         private static HttpClient _client = new HttpClient();
         
-        public bool CanHandle(string scheme) =>
-            ((scheme == "http") || (scheme == "https"));
+        public bool CanHandle(string source) =>
+            (source.StartsWith("http://") || source.StartsWith("https://"));
         
         public Task Resolve(EntryMod mod, string mcVersion, Action<EntryMod> addDependency) =>
             Task.CompletedTask;

@@ -32,9 +32,7 @@ namespace GitMC.Lib.Mods
             
             while (processingMods.Count > 0) {
                 var isHandlingDependencies = (processingMods != _config.Mods); // Might be useful later.
-                var mods = processingMods.Select(mod =>
-                    new ModWrapper(mod, _sources.Find(source =>
-                        source.CanHandle(mod.Scheme)))).ToList();
+                var mods = processingMods.Select(mod => new ModWrapper(mod, _sources)).ToList();
                 
                 // See if any if the mods don't have a mod source handler.
                 var noSources = mods.Where(mod => (mod.Source == null)).Select(mod => mod.Mod).ToList();
@@ -75,8 +73,8 @@ namespace GitMC.Lib.Mods
             public string FileName { get; private set; }
             public MCModInfo ModInfo { get; private set; }
             
-            public ModWrapper(EntryMod mod, IModSource source)
-                { Mod = mod; Source = source; }
+            public ModWrapper(EntryMod mod, List<IModSource> sources)
+                { Mod = mod; Source = sources.Find(src => src.CanHandle(mod.Source)); }
             
             public Task Resolve(string mcVersion, Action<EntryMod> addDependency) =>
                 Source.Resolve(Mod, mcVersion, addDependency);
@@ -137,11 +135,8 @@ namespace GitMC.Lib.Mods
         
         private static string CreateMessage(List<EntryMod> mods)
         {
-            return "No scheme handling for mod sources:\n  " +
-                string.Join("\n  ", mods.Select(mod => {
-                    var scheme = (mod.Scheme != null) ? $"'{ mod.Scheme }'" : "(none)";
-                    return $"Scheme: { scheme } - Source: '{ mod.Source }'";
-                }));
+            return "No source handling for mods:\n  " +
+                string.Join("\n  ", mods.Select(mod => $"Source: '{ mod.Source }'"));
         }
     }
 }

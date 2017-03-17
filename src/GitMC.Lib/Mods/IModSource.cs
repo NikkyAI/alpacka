@@ -7,8 +7,8 @@ namespace GitMC.Lib.Mods
 {
     public interface IModSource
     {
-        /// <summary> Returns if this mod source handles the specified scheme. </summary>
-        bool CanHandle(string scheme);
+        /// <summary> Returns if this mod source handles the specified source string. </summary>
+        bool CanHandle(string source);
         
         /// <summary> Resolves as much mod information as possible before downloading
         ///           the mod, allowing for some error checking and adding dependencies. </summary>
