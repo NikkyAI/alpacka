@@ -33,17 +33,17 @@ namespace GitMC.Test
         {
             var config = ModpackConfig.Load(CONFIG_FILE);
             
-            var downloader = new ModpackDownloader(config){ new ModSourceURL() };
-            var downloaded = await downloader.Run();
+            var downloader = new ModpackDownloader()
+                .WithSourceHandler(new ModSourceURL());
+            var downloaded = await downloader.Run(config);
             
             if (Directory.Exists(MODS_FOLDER))
                 Directory.Delete(MODS_FOLDER, true);
             Directory.CreateDirectory(MODS_FOLDER);
             
-            // TODO: Use original downloaded file name.
-            foreach (var downloadedMod in downloaded)
-                File.Move(downloadedMod.TempPath, Path.Combine(MODS_FOLDER,
-                    (downloadedMod.FileName ?? $"{ downloadedMod.Mod.Name }-{ downloadedMod.Mod.Version }.jar")));
+            foreach (var downloadedMod in downloaded) 
+                File.Move(downloadedMod.File.Path, Path.Combine(MODS_FOLDER,
+                    (downloadedMod.File.FileName ?? $"{ downloadedMod.Mod.Name }-{ downloadedMod.Mod.Version }.jar")));
             
             var build = new ModpackBuild(config);
             build.Save(BUILD_FILE, pretty: true);
