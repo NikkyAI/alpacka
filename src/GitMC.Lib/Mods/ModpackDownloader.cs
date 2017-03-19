@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using GitMC.Lib.Config;
+using GitMC.Lib.Net;
 
 namespace GitMC.Lib.Mods
 {

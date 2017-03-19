@@ -1,9 +1,9 @@
 using System;
 using System.Security.Cryptography;
 
-namespace GitMC.Lib.Mods
+namespace GitMC.Lib.Net
 {
-    public class MD5Transform : IDisposable, ICryptoTransform
+    internal class MD5Transform : IDisposable, ICryptoTransform
     {
         private readonly IncrementalHash _incrementalHash =
             IncrementalHash.CreateHash(HashAlgorithmName.MD5);

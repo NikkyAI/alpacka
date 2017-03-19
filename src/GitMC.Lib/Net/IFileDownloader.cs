@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace GitMC.Lib.Mods
+namespace GitMC.Lib.Net
 {
     public interface IFileDownloader
     {

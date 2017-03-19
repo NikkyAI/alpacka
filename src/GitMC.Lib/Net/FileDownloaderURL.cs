@@ -4,7 +4,7 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
-namespace GitMC.Lib.Mods
+namespace GitMC.Lib.Net
 {
     public class FileDownloaderURL : IFileDownloader
     {
@@ -19,7 +19,7 @@ namespace GitMC.Lib.Mods
             // Try using suggested file name or getting the it from the request uri.
             var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
                 ?? response.Content.Headers.ContentDisposition?.FileName
-                ?? GetFilenameFromUri(response.RequestMessage.RequestUri);
+                ?? GetFileNameFromUri(response.RequestMessage.RequestUri);
             
             int size;
             var transform = new MD5Transform();
@@ -33,12 +33,12 @@ namespace GitMC.Lib.Mods
             return new DownloadedFile(url, tempPath, fileName, size, md5);
         }
         
-        private static string GetFilenameFromUri(Uri uri)
+        private static string GetFileNameFromUri(Uri uri)
         {
             try {
-                var filename = Path.GetFileName(uri.ToString());
-                if (!filename.EndsWith(".jar")) return null;
-                return filename;
+                var fileName = Path.GetFileName(uri.ToString());
+                if (!fileName.EndsWith(".jar")) return null;
+                return fileName;
             } catch { return null; }
         }
     }
