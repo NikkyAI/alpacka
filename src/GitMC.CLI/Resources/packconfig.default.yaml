@@ -1,0 +1,31 @@
+name: {{NAME}}
+description: {{DESCRIPTION}}
+authors: [ {{AUTHORS}} ]
+links:
+  website: ...
+  source: ...
+  issues: ...
+  donations: ...
+
+version: "1.0.0"
+mcVersion: ...
+
+defaults:
+  version: recommended # or latest
+
+mods:
+  
+  - name: Sample Mod
+    description: This is a sample mod.
+    links:
+      website: http://sample.mod/
+      source: https://github.com/Ronald/SampleMod
+      issues: https://github.com/Ronald/SampleMod/issues
+      donations: https://patreon.com/Ronald
+    version: "0.1.0"
+    # Only the src property is actually required.
+    src: https://github.com/ExampleSensei/SampleMod/releases/download/v0.1.0/SampleMod-0.1.0.jar
+    md5: 2ab96390c7dbe3439de74d0c9b0b1767 # Optional, used to verify.
+  
+  # Alternatively you can use this shorthand to define only the source.
+  - https://github.com/ExampleSensei/SampleLib/releases/download/v1.0.0/SampleLib-1.0.0.jar

@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+  
   <PropertyGroup>
     <AssemblyName>GitMC</AssemblyName>
     <PackageId>GitMC</PackageId>
@@ -11,5 +11,5 @@
     <PackageTargetFallback>$(PackageTargetFallback);portable-net451</PackageTargetFallback>
     <RuntimeFrameworkVersion>1.1.1</RuntimeFrameworkVersion>
   </PropertyGroup>
-
+  
 </Project>
