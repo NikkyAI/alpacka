@@ -90,11 +90,13 @@ namespace GitMC.Lib.Mods
                     $"Exception when extracting mcmod.info data for mod '{ this }'", ex); }
                 // TODO: Gracefully handle missing / invalid mcmod.info and allow specifying stuff manually.
                 
-                if (Mod.Name == null) Mod.Name = ModInfo.Name;
-                if (Mod.Description == null) Mod.Description = ModInfo.Description;
-                if (Mod.Version == null) Mod.Version = ModInfo.Version;
-                if ((Mod.Links == null) && !string.IsNullOrEmpty(ModInfo.URL))
-                    Mod.Links = new EntryLinks { Website = ModInfo.URL };
+                if (string.IsNullOrEmpty(Mod.Name)) Mod.Name = ModInfo.Name;
+                if (string.IsNullOrEmpty(Mod.Description)) Mod.Description = ModInfo.Description;
+                if (string.IsNullOrEmpty(Mod.Version)) Mod.Version = ModInfo.Version;
+                if (string.IsNullOrEmpty(Mod.Links?.Website)) {
+                    if (Mod.Links == null) Mod.Links = new EntryLinks();
+                    Mod.Links.Website = ModInfo.URL;
+                }
                 // TODO: Warn if version doesn't match up?
                 
                 Console.WriteLine($"Extracted mod info :: Name: { ModInfo.Name } - Version: { ModInfo.Version }");

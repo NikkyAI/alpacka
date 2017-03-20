@@ -13,20 +13,19 @@ namespace GitMC.Lib.Config
         [Required]
         public string Name { get; set; }
         public string Description { get; set; }
-        [YamlMember(Alias = "version")]
-        public string PackVersion { get; set; }
-        public EntryLinks Links { get; set; }
-        
         public List<string> Authors { get; set; }
         public List<string> Contributors { get; set; }
+        public EntryLinks Links { get; set; }
         
+        [YamlMember(Alias = "version")]
+        public string PackVersion { get; set; } = "1.0.0";
         [Required, YamlMember(Alias = "mcVersion")]
         public string MinecraftVersion { get; set; }
         
         public EntryDefaults Defaults { get; set; } = EntryDefaults.Default;
         
         [Required]
-        public List<EntryMod> Mods { get; set; }
+        public List<EntryMod> Mods { get; set; } = new List<EntryMod>();
         
         
         public static ModpackConfig Load(string path)

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 using YamlDotNet.Serialization;
 
@@ -11,7 +12,7 @@ namespace GitMC.Lib.Config
         public EntryLinks Links { get; set; }
         
         public string Version { get; set; }
-        [YamlMember(Alias = "src"), JsonProperty("src")]
+        [Required, YamlMember(Alias = "src"), JsonProperty("src")]
         public string Source { get; set; }
         public string MD5 { get; set; }
         
