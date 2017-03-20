@@ -31,6 +31,9 @@ namespace GitMC.Lib.Config
         
         public static ModpackConfig Load(string path)
         {
+            if (Directory.Exists(path))
+                path = Path.Combine(path, Constants.PACK_CONFIG_FILE);
+            
             var deserializer = new DeserializerBuilder()
                 .IgnoreUnmatchedProperties()
                 .WithNamingConvention(new CamelCaseNamingConvention())

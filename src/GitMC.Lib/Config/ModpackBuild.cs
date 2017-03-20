@@ -40,6 +40,8 @@ namespace GitMC.Lib.Config
         
         public void Save(string path, bool pretty = false)
         {
+            if (Directory.Exists(path))
+                path = Path.Combine(path, Constants.PACK_BUILD_FILE);
             var settings = new JsonSerializerSettings {
                 Formatting = (pretty ? Formatting.Indented : Formatting.None),
                 NullValueHandling = NullValueHandling.Ignore,
