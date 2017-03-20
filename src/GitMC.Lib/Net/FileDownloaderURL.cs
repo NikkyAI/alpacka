@@ -21,16 +21,13 @@ namespace GitMC.Lib.Net
                 ?? response.Content.Headers.ContentDisposition?.FileName
                 ?? GetFileNameFromUri(response.RequestMessage.RequestUri);
             
-            int size;
             var transform = new MD5Transform();
-            using (var writeStream = new CryptoStream(File.OpenWrite(tempPath), transform, CryptoStreamMode.Write)) {
+            using (var writeStream = new CryptoStream(File.OpenWrite(tempPath), transform, CryptoStreamMode.Write))
                 await response.Content.CopyToAsync(writeStream);
-                size = (int)writeStream.Position; // TODO: See if CryptoStream.Position is what we want.
-            }
             
-            var md5 = BitConverter.ToString(transform.Hash).Replace("-", "").ToLowerInvariant();
+            var md5  = BitConverter.ToString(transform.Hash).Replace("-", "").ToLowerInvariant();
             
-            return new DownloadedFile(url, tempPath, fileName, size, md5);
+            return new DownloadedFile(url, tempPath, fileName, md5);
         }
         
         private static string GetFileNameFromUri(Uri uri)
