@@ -12,10 +12,10 @@ namespace GitMC.Lib.Config
     
     public static class SideExtensions
     {
-        public static bool isClient(this Side side) =>
+        public static bool IsClient(this Side side) =>
             ((side & Side.Client) == Side.Client);
         
-        public static bool isServer(this Side side) =>
+        public static bool IsServer(this Side side) =>
             ((side & Side.Server) == Side.Server);
     }
 }

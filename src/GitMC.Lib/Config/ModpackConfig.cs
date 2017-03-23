@@ -58,8 +58,8 @@ namespace GitMC.Lib.Config
             var index = mod.Source.LastIndexOf('@');
             if (index == -1) return;
             
-            var newSource  = mod.Source.Substring(0, index);
-            var newVersion = mod.Source.Substring(index + 1);
+            var newSource  = mod.Source.Substring(0, index).Trim();
+            var newVersion = mod.Source.Substring(index + 1).Trim();
             
             if (mod.Version != null)
                 throw new Exception($"Mod '{ mod.Name ?? mod.Source }' has both @version ({ newVersion })" +

@@ -10,9 +10,7 @@ namespace GitMC.Lib.Config
         private readonly INodeDeserializer _nodeDeserializer;
         
         public ValidatingNodeDeserializer(INodeDeserializer nodeDeserializer)
-        {
-            _nodeDeserializer = nodeDeserializer;
-        }
+            { _nodeDeserializer = nodeDeserializer; }
         
         public bool Deserialize(IParser reader, Type expectedType,
                                 Func<IParser, Type, object> nestedObjectDeserializer, out object value)
