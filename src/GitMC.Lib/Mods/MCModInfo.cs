@@ -65,13 +65,13 @@ namespace GitMC.Lib.Mods
             public int ModListVersion { get; set; }
             public List<MCModInfo> ModList { get; set; }
         }
-        
-        public class MCModInfoException : Exception
-        {
-            public MCModInfoException(string message)
-                : base(message) {  }
-            public MCModInfoException(string message, Exception innerException)
-                : base(message, innerException) {  }
-        }
+    }
+    
+    public class MCModInfoException : Exception
+    {
+        public MCModInfoException(string message)
+            : base(message) {  }
+        public MCModInfoException(string message, Exception innerException)
+            : base(message, innerException) {  }
     }
 }

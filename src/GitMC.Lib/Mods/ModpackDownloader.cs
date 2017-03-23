@@ -22,7 +22,7 @@ namespace GitMC.Lib.Mods
         public async Task<List<DownloadedMod>> Run(ModpackConfig config)
         {
             var processingMods = config.Mods;
-            var idToModDict    = new Dictionary<string, ModWrapper>();
+            var modDict        = new Dictionary<string, ModWrapper>();
             var dependencies   = new List<EntryMod>();
             
             Action<EntryMod> addDependency = (dependency) =>
@@ -44,17 +44,24 @@ namespace GitMC.Lib.Mods
                 await Task.WhenAll(mods.Select(mod => mod.ExtractModInfo()));
                 
                 // TODO: Handle the possibility of knowing ModID before mod has been downloaded completely.
-                // TODO: If mod already exists in idToModDict, merge properties such as Side information.
-                foreach (var mod in mods)
-                    if (!idToModDict.ContainsKey(mod.ModInfo.ModID))
-                        idToModDict.Add(mod.ModInfo.ModID, mod);
+                // TODO: If mod already exists in modDict, merge properties such as Side information.
+                foreach (var mod in mods) {
+                    // Unfortunately, not every mod contains an mcmod.info,
+                    // in that case just use the Source as dictionary key.
+                    var key = mod.ModInfo?.ModID ?? mod.Mod.Source;
+                    if (!modDict.ContainsKey(key)) modDict.Add(key, mod);
+                    else Console.WriteLine($"Debug: Downloaded '{ mod }' multiple times");
+                }
                 
                 processingMods = dependencies;
                 dependencies   = new List<EntryMod>();
             }
             
-            return idToModDict.Values.Select(mod =>
-                new DownloadedMod(mod.Mod, mod.DownloadedFile)).ToList();
+            return modDict.Values.Select(mod => {
+                // Replace Source with resolved download URL before returning.
+                mod.Mod.Source = mod.DownloadURL;
+                return new DownloadedMod(mod.Mod, mod.DownloadedFile);
+            }).ToList();
         }
         
         public class DownloadedMod
@@ -86,9 +93,10 @@ namespace GitMC.Lib.Mods
             {
                 try { using (var readStream = File.OpenRead(DownloadedFile.Path))
                     ModInfo = await MCModInfo.Extract(readStream); }
-                catch (Exception ex) { throw new DownloaderException(
-                    $"Exception when extracting mcmod.info data for mod '{ this }'", ex); }
-                // TODO: Gracefully handle missing / invalid mcmod.info and allow specifying stuff manually.
+                catch (Exception ex) {
+                    Console.WriteLine($"Warning: Couldn't load mcmod.info of '{ this }':\n{ ex }");
+                    return;
+                }
                 
                 if (string.IsNullOrEmpty(Mod.Name)) Mod.Name = ModInfo.Name;
                 if (string.IsNullOrEmpty(Mod.Description)) Mod.Description = ModInfo.Description;
