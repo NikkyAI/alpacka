@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Xunit;
 using GitMC.Lib.Config;
-using GitMC.Lib.Mods;
+using GitMC.Lib.Installer;
 
 namespace GitMC.Test
 {
@@ -22,6 +22,13 @@ namespace GitMC.Test
             var cwd = Path.Combine(dir, "run");
             Directory.CreateDirectory(cwd);
             Directory.SetCurrentDirectory(cwd);
+        }
+        
+        [Fact]
+        public async void ForgeInstaller()
+        {
+            string url = Forge.GetUrl("1.10.2", DefaultVersion.Recommended);
+            Console.WriteLine($"url: {url}");
         }
     }
 }
