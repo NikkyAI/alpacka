@@ -1,6 +1,6 @@
-name: {{NAME}}
-description: {{DESCRIPTION}}
-authors: [ {{AUTHORS}} ]
+name: {{ NAME }}
+description: {{ DESCRIPTION }}
+authors: [ {{ AUTHORS }} ]
 links:
   website: ...
   source: ...
@@ -8,7 +8,8 @@ links:
   donations: ...
 
 version: "1.0.0"
-mcVersion: ...
+mcVersion: {{ MC_VERSION }}
+forgeVersion: {{ FORGE_VERSION }}
 
 defaults:
   version: recommended # or latest

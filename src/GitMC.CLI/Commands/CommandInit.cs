@@ -56,7 +56,7 @@ namespace GitMC.CLI.Commands
                     : Environment.GetEnvironmentVariable("USERNAME") ?? "...";
                 
                 defaultConfig = Regex.Replace(defaultConfig, "{{(.+)}}", match => {
-                    switch (match.Groups[1].Value) {
+                    switch (match.Groups[1].Value.Trim()) {
                         case "NAME": return packName;
                         case "DESCRIPTION": return packDesc;
                         case "AUTHORS": return authors;
