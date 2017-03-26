@@ -7,7 +7,7 @@ links:
   issues: ...
   donations: ...
 
-version: "1.0.0"
+version: 1.0.0
 mcVersion: {{ MC_VERSION }}
 forgeVersion: {{ FORGE_VERSION }}
 

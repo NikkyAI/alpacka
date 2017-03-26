@@ -27,8 +27,10 @@ namespace GitMC.Test
         [Fact]
         public async void ForgeInstaller()
         {
-            string url = Forge.GetUrl("1.10.2", DefaultVersion.Recommended);
-            Console.WriteLine($"url: {url}");
+            var forgeData = await ForgeVersionData.Download();
+            string url = forgeData.GetRecent("1.10.2", DefaultVersion.Recommended)
+                ?.GetInstaller()?.GetURL();
+            Console.WriteLine($"URL: { url }");
         }
     }
 }

@@ -4,6 +4,8 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.CommandLineUtils;
 using GitMC.Lib;
+using GitMC.Lib.Config;
+using GitMC.Lib.Installer;
 
 namespace GitMC.CLI.Commands
 {
@@ -55,11 +57,17 @@ namespace GitMC.CLI.Commands
                     ? string.Join(", ", optAuthors.Values)
                     : Environment.GetEnvironmentVariable("USERNAME") ?? "...";
                 
+                var forgeData    = ForgeVersionData.Download().Result;
+                var mcVersion    = forgeData.GetRecentMCVersion(DefaultVersion.Recommended);
+                var forgeVersion = forgeData.GetRecent(mcVersion, DefaultVersion.Recommended)?.GetFullVersion();
+                
                 defaultConfig = Regex.Replace(defaultConfig, "{{(.+)}}", match => {
                     switch (match.Groups[1].Value.Trim()) {
                         case "NAME": return packName;
                         case "DESCRIPTION": return packDesc;
                         case "AUTHORS": return authors;
+                        case "MC_VERSION": return mcVersion;
+                        case "FORGE_VERSION": return forgeVersion;
                         default: return "...";
                     }
                 });
