@@ -21,7 +21,8 @@ namespace GitMC.Lib.Config
         public string PackVersion { get; set; } = "1.0.0";
         [Required, YamlMember(Alias = "mcVersion")]
         public string MinecraftVersion { get; set; }
-        
+        public string ForgeVersion { get; set; }
+
         public EntryDefaults Defaults { get; set; } = EntryDefaults.Default;
         
         [Required]

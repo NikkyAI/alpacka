@@ -18,6 +18,7 @@ namespace GitMC.Lib.Config
         
         [JsonProperty("mcVersion")]
         public string MinecraftVersion { get; set; }
+        public string ForgeVersion { get; set; }
         
         public EntryDefaults Defaults { get; set; }
         
