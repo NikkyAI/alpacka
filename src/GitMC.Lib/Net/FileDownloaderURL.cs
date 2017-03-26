@@ -7,14 +7,38 @@ using System.Threading.Tasks;
 
 namespace GitMC.Lib.Net
 {
-    public class FileDownloaderURL : IFileDownloader
+    public class FileDownloaderURL : IFileDownloader, IDisposable
     {
         private static readonly int MAX_REDIRECTS = 8;
+        
+        private static readonly Random _rnd = new Random();
         private static HttpClient _client = new HttpClient();
+        
+        private readonly FileCache _cache;
+        private readonly string _tempDir;
+        private bool _disposed = false;
+        
+        public FileDownloaderURL(FileCache cache)
+        {
+            _cache = cache;
+            _tempDir = Path.Combine(Path.GetTempPath(), $"gitmc-{ _rnd.Next() }");
+            Directory.CreateDirectory(_tempDir);
+        }
+        
+        ~FileDownloaderURL() =>
+            Dispose();
+        
+        public void Dispose()
+        {
+            if (_disposed) return;
+            Directory.Delete(_tempDir, true);
+            GC.SuppressFinalize(this);
+            _disposed = true;
+        }
+        
         
         public async Task<DownloadedFile> Download(string url)
         {
-            var tempPath = Path.GetTempFileName();
             var response = await _client.GetAsync(url);
             
             int redirects = 0;
@@ -33,14 +57,23 @@ namespace GitMC.Lib.Net
                 ?? response.Content.Headers.ContentDisposition?.FileName
                 ?? GetFileNameFromUri(response.RequestMessage.RequestUri);
             
-            var transform = new MD5Transform();
-            using (var writeStream = new CryptoStream(File.OpenWrite(tempPath), transform, CryptoStreamMode.Write))
-                await response.Content.CopyToAsync(writeStream);
+            if (fileName == null)
+                throw new NoFileNameException(url);
             
-            var md5 = BitConverter.ToString(transform.Hash)
-                .Replace("-", "").ToLowerInvariant();
-            
-            return new DownloadedFile(url, tempPath, fileName, md5);
+            return await _cache.Get(fileName, async () => {
+                
+                var transform = new MD5Transform();
+                var tempPath  = Path.Combine(_tempDir, fileName);
+                using (var writeStream = new CryptoStream(File.OpenWrite(tempPath), transform, CryptoStreamMode.Write))
+                    await response.Content.CopyToAsync(writeStream);
+                
+                var md5 = BitConverter.ToString(transform.Hash)
+                    .Replace("-", "").ToLowerInvariant();
+                
+                Console.WriteLine($"Downloaded '{ fileName }'");
+                return new DownloadedFile(url, tempPath, fileName, md5);
+                
+            });
         }
         
         private static string GetFileNameFromUri(Uri uri)
@@ -51,5 +84,14 @@ namespace GitMC.Lib.Net
                 return fileName;
             } catch { return null; }
         }
+    }
+    
+    public class NoFileNameException : Exception
+    {
+        public string DownloadURL { get; }
+        
+        public NoFileNameException(string url)
+            : base($"Could not get file name from URL '{ url }'")
+            { DownloadURL = url; }
     }
 }

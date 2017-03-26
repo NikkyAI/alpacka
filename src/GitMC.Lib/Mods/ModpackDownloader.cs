@@ -8,13 +8,24 @@ using GitMC.Lib.Net;
 
 namespace GitMC.Lib.Mods
 {
-    public class ModpackDownloader
+    public class ModpackDownloader : IDisposable
     {
         private readonly IFileDownloader _fileDownloader;
         private readonly List<IModSource> _sources = new List<IModSource>();
         
         public ModpackDownloader(IFileDownloader fileDownloader = null)
-            { _fileDownloader = fileDownloader ?? new FileDownloaderURL(); }
+        {
+            _fileDownloader = fileDownloader
+                ?? new FileDownloaderURL(Constants.ModsCache);
+        }
+        
+        ~ModpackDownloader() => Dispose();
+        
+        public void Dispose()
+        {
+            (_fileDownloader as IDisposable)?.Dispose();
+            GC.SuppressFinalize(this);
+        }
         
         public ModpackDownloader WithSourceHandler(IModSource source)
             { _sources.Add(source); return this; }
@@ -64,23 +75,16 @@ namespace GitMC.Lib.Mods
             }).ToList();
         }
         
-        public class DownloadedMod
-        {
-            public EntryMod Mod { get; }
-            public DownloadedFile File { get; }
-            
-            public DownloadedMod(EntryMod mod, DownloadedFile file) { Mod = mod; File = file; }
-        }
-        
         private class ModWrapper
         {
             public EntryMod Mod { get; }
             public IModSource SourceHandler { get; }
+            
             public string DownloadURL { get; private set; }
             public DownloadedFile DownloadedFile { get; private set; }
             public MCModInfo ModInfo { get; private set; }
             
-            public ModWrapper(EntryMod mod, List<IModSource> sources)
+            internal ModWrapper(EntryMod mod, List<IModSource> sources)
                 { Mod = mod; SourceHandler = sources.Find(src => src.CanHandle(mod.Source)); }
             
             public async Task Resolve(string mcVersion, Action<EntryMod> addDependency) =>
@@ -94,7 +98,7 @@ namespace GitMC.Lib.Mods
                 try { using (var readStream = File.OpenRead(DownloadedFile.Path))
                     ModInfo = await MCModInfo.Extract(readStream); }
                 catch (Exception ex) {
-                    Console.WriteLine($"Warning: Couldn't load mcmod.info of '{ this }':\n{ ex.Message }");
+                    Console.WriteLine($"Warning: Couldn't load mcmod.info of '{ this }': { ex.Message }");
                     return;
                 }
                 
@@ -106,12 +110,18 @@ namespace GitMC.Lib.Mods
                     Mod.Links.Website = ModInfo.URL;
                 }
                 // TODO: Warn if version doesn't match up?
-                
-                Console.WriteLine($"Extracted mod info :: Name: { ModInfo.Name } - Version: { ModInfo.Version }");
             }
             
             public override string ToString() => (Mod.Name ?? Mod.Source);
         }
+    }
+    
+    public class DownloadedMod
+    {
+        public EntryMod Mod { get; }
+        public DownloadedFile File { get; }
+        
+        public DownloadedMod(EntryMod mod, DownloadedFile file) { Mod = mod; File = file; }
     }
     
     public class DownloaderException : Exception
