@@ -36,8 +36,7 @@ namespace GitMC.Lib.Mods
         {
             var zip   = new ZipFile(modFileStream);
             var entry = zip.GetEntry("mcmod.info");
-            if (entry == null) throw new MCModInfoException(
-                "mcmod.info could not be found in mod archive");
+            if (entry == null) throw new MCModInfoNotFoundException();
             
             string modInfo;
             using (var reader = new StreamReader(zip.GetInputStream(entry)))
@@ -73,5 +72,11 @@ namespace GitMC.Lib.Mods
             : base(message) {  }
         public MCModInfoException(string message, Exception innerException)
             : base(message, innerException) {  }
+    }
+    
+    public class MCModInfoNotFoundException : MCModInfoException
+    {
+        public MCModInfoNotFoundException()
+            : base("mcmod.info could not be found in mod archive") {  }
     }
 }

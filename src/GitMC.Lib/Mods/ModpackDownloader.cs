@@ -94,7 +94,7 @@ namespace GitMC.Lib.Mods
                 try { using (var readStream = File.OpenRead(DownloadedFile.Path))
                     ModInfo = await MCModInfo.Extract(readStream); }
                 catch (Exception ex) {
-                    Console.WriteLine($"Warning: Couldn't load mcmod.info of '{ this }':\n{ ex }");
+                    Console.WriteLine($"Warning: Couldn't load mcmod.info of '{ this }':\n{ ex.Message }");
                     return;
                 }
                 
