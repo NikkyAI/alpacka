@@ -5,17 +5,17 @@ using Newtonsoft.Json.Serialization;
 
 namespace GitMC.Lib.Config
 {
+    // TODO: Do we need this class? ModpackConfig has the same fields.
     public class ModpackBuild
     {
         public string Name { get; set; }
         public string Description { get; set; }
-        [JsonProperty("version")]
-        public string PackVersion { get; set; }
-        public EntryLinks Links { get; set; }
-        
         public List<string> Authors { get; set; }
         public List<string> Contributors { get; set; }
+        public EntryLinks Links { get; set; }
         
+        [JsonProperty("version")]
+        public string PackVersion { get; set; }
         [JsonProperty("mcVersion")]
         public string MinecraftVersion { get; set; }
         public string ForgeVersion { get; set; }
@@ -29,13 +29,16 @@ namespace GitMC.Lib.Config
         {
             Name         = config.Name;
             Description  = config.Description;
-            PackVersion  = config.PackVersion;
-            Links        = config.Links;
             Authors      = config.Authors;
             Contributors = config.Contributors;
+            Links        = config.Links;
             
-            // TODO: This will eventually be replaced by proper mod handling / resolving etc.
-            Mods = config.Mods;
+            PackVersion      = config.PackVersion;
+            MinecraftVersion = config.MinecraftVersion;
+            ForgeVersion     = config.ForgeVersion;
+            
+            Defaults = config.Defaults;
+            Mods     = config.Mods;
         }
         
         
