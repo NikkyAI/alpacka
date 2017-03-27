@@ -9,7 +9,7 @@ links:
 
 version: 1.0.0
 mcVersion: {{ MC_VERSION }}
-forgeVersion: {{ FORGE_VERSION }}
+forgeVersion: recommended
 
 defaults:
   version: recommended # or latest
@@ -23,7 +23,7 @@ mods:
       source: https://github.com/Ronald/SampleMod
       issues: https://github.com/Ronald/SampleMod/issues
       donations: https://patreon.com/Ronald
-    version: "0.1.0"
+    version: 0.1.0
     # Only the src property is actually required.
     src: https://github.com/ExampleSensei/SampleMod/releases/download/v0.1.0/SampleMod-0.1.0.jar
     md5: 2ab96390c7dbe3439de74d0c9b0b1767 # Optional, used to verify.
