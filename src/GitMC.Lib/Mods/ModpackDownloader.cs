@@ -32,7 +32,7 @@ namespace GitMC.Lib.Mods
         
         public async Task<List<DownloadedMod>> Run(ModpackConfig config)
         {
-            var processingMods = config.Mods;
+            var processingMods = config.Mods; // TODO: Clone mods before processing?
             var modDict        = new Dictionary<string, ModWrapper>();
             var dependencies   = new List<EntryMod>();
             
@@ -46,6 +46,10 @@ namespace GitMC.Lib.Mods
                 // See if any if the mods don't have a mod source handler.
                 var noSources = mods.Where(mod => (mod.SourceHandler == null)).Select(mod => mod.Mod).ToList();
                 if (noSources.Count > 0) throw new NoSourceHandlerException(noSources);
+                
+                // If any mod versions are not set, set them to the default now (recommended or latest).
+                foreach (var mod in mods) if (mod.Mod.Version == null)
+                    mod.Mod.Version = config.Defaults.Version.ToString().ToLowerInvariant();
                 
                 await Task.WhenAll(mods.Select(mod => mod.Resolve(config.MinecraftVersion, addDependency)));
                 // Discard mods whose download URL has not been set.
