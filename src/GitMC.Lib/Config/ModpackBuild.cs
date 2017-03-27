@@ -20,8 +20,6 @@ namespace GitMC.Lib.Config
         public string MinecraftVersion { get; set; }
         public string ForgeVersion { get; set; }
         
-        public EntryDefaults Defaults { get; set; }
-        
         public List<EntryMod> Mods { get; set; }
         
         
@@ -37,8 +35,7 @@ namespace GitMC.Lib.Config
             MinecraftVersion = config.MinecraftVersion;
             ForgeVersion     = config.ForgeVersion;
             
-            Defaults = config.Defaults;
-            Mods     = config.Mods;
+            Mods = config.Mods;
         }
         
         
