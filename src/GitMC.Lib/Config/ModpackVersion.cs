@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using YamlDotNet.Serialization;
 
@@ -48,7 +49,8 @@ namespace GitMC.Lib.Config
             var settings = new JsonSerializerSettings {
                 Formatting = (pretty ? Formatting.Indented : Formatting.None),
                 NullValueHandling = NullValueHandling.Ignore,
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                Converters = { new StringEnumConverter { CamelCaseText = true } }
             };
             var json = JsonConvert.SerializeObject(this, settings);
             File.WriteAllText(path, json);
