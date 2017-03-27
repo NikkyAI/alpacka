@@ -1,9 +1,11 @@
+using System;
 using System.IO;
 using System.Collections.Generic;
 using Microsoft.Extensions.CommandLineUtils;
 using GitMC.Lib;
 using GitMC.Lib.Config;
 using GitMC.Lib.Mods;
+using GitMC.Lib.Net;
 
 namespace GitMC.CLI.Commands
 {
@@ -23,6 +25,12 @@ namespace GitMC.CLI.Commands
                 
                 var config = ModpackConfig.LoadYAML(directory);
                 var build  = config.Clone();
+                                
+                DefaultVersion forgeRecommendation;
+                if (Enum.TryParse(build.ForgeVersion, true, out forgeRecommendation))
+                    build.ForgeVersion = (await ForgeVersionData.Download())
+                        .GetRecent(build.MinecraftVersion, forgeRecommendation)
+                        .GetFullVersion();
                 
                 // If any mod versions are not set, set them to the default now (recommended or latest).
                 foreach (var mod in build.Mods) if (mod.Version == null)
