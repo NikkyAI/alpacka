@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Xunit;
 using GitMC.Lib.Config;
-using GitMC.Lib.Installer;
+using GitMC.Lib.Net;
 
 namespace GitMC.Test
 {

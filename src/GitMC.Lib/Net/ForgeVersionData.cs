@@ -10,7 +10,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using GitMC.Lib.Config;
 
-namespace GitMC.Lib.Installer
+namespace GitMC.Lib.Net
 {
     public class ForgeVersionData
     {

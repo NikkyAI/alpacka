@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.CommandLineUtils;
 using GitMC.Lib;
 using GitMC.Lib.Config;
-using GitMC.Lib.Installer;
+using GitMC.Lib.Net;
 
 namespace GitMC.CLI.Commands
 {
