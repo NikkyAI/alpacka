@@ -21,12 +21,17 @@ namespace GitMC.CLI.Commands
                 // TODO: Find root directory with pack config file.
                 var directory = ".";
                 
-                var config = ModpackConfig.Load(directory);
+                var config = ModpackConfig.LoadYAML(directory);
+                var build  = config.Clone();
+                
+                // If any mod versions are not set, set them to the default now (recommended or latest).
+                foreach (var mod in build.Mods) if (mod.Version == null)
+                    mod.Version = config.Defaults.Version.ToString().ToLowerInvariant();
                 
                 List<DownloadedMod> downloaded;
                 using (var downloader = new ModpackDownloader()
                         .WithSourceHandler(new ModSourceURL()))
-                    downloaded = await downloader.Run(config);
+                    downloaded = await downloader.Run(build);
                 
                 var modsDir = Path.Combine(directory, Constants.MODS_DIR);
                 if (Directory.Exists(modsDir))
@@ -39,8 +44,7 @@ namespace GitMC.CLI.Commands
                     File.Copy(downloadedMod.File.Path, Path.Combine(modsDir, fileName));
                 }
                 
-                var build = new ModpackBuild(config);
-                build.Save(directory, pretty: true);
+                build.SaveJSON(directory, pretty: true);
                 
                 // TODO: This is ugly. Don't use static file cache?
                 Constants.ModsCache.Save();

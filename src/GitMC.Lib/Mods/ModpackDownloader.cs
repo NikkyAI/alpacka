@@ -30,9 +30,9 @@ namespace GitMC.Lib.Mods
         public ModpackDownloader WithSourceHandler(IModSource source)
             { _sources.Add(source); return this; }
         
-        public async Task<List<DownloadedMod>> Run(ModpackConfig config)
+        public async Task<List<DownloadedMod>> Run(ModpackVersion pack)
         {
-            var processingMods = config.Mods; // TODO: Clone mods before processing?
+            var processingMods = pack.Mods;
             var modDict        = new Dictionary<string, ModWrapper>();
             var dependencies   = new List<EntryMod>();
             
@@ -40,18 +40,14 @@ namespace GitMC.Lib.Mods
                 { lock (dependencies) dependencies.Add(dependency); };
             
             while (processingMods.Count > 0) {
-                var isHandlingDependencies = (processingMods != config.Mods); // Might be useful later.
+                var isHandlingDependencies = (processingMods != pack.Mods); // Might be useful later.
                 var mods = processingMods.Select(mod => new ModWrapper(mod, _sources)).ToList();
                 
                 // See if any if the mods don't have a mod source handler.
                 var noSources = mods.Where(mod => (mod.SourceHandler == null)).Select(mod => mod.Mod).ToList();
                 if (noSources.Count > 0) throw new NoSourceHandlerException(noSources);
                 
-                // If any mod versions are not set, set them to the default now (recommended or latest).
-                foreach (var mod in mods) if (mod.Mod.Version == null)
-                    mod.Mod.Version = config.Defaults.Version.ToString().ToLowerInvariant();
-                
-                await Task.WhenAll(mods.Select(mod => mod.Resolve(config.MinecraftVersion, addDependency)));
+                await Task.WhenAll(mods.Select(mod => mod.Resolve(pack.MinecraftVersion, addDependency)));
                 // Discard mods whose download URL has not been set.
                 mods = mods.Where(mod => (mod.DownloadURL != null)).ToList();
                 

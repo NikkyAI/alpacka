@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -8,28 +6,11 @@ using YamlDotNet.Serialization.NodeDeserializers;
 
 namespace GitMC.Lib.Config
 {
-    public class ModpackConfig
+    public class ModpackConfig : ModpackVersion
     {
-        [Required]
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public List<string> Authors { get; set; }
-        public List<string> Contributors { get; set; }
-        public EntryLinks Links { get; set; }
-        
-        [YamlMember(Alias = "version")]
-        public string PackVersion { get; set; } = "1.0.0";
-        [Required, YamlMember(Alias = "mcVersion")]
-        public string MinecraftVersion { get; set; }
-        public string ForgeVersion { get; set; }
-
         public EntryDefaults Defaults { get; set; } = EntryDefaults.Default;
         
-        [Required]
-        public List<EntryMod> Mods { get; set; } = new List<EntryMod>();
-        
-        
-        public static ModpackConfig Load(string path)
+        public static ModpackConfig LoadYAML(string path)
         {
             if (Directory.Exists(path))
                 path = Path.Combine(path, Constants.PACK_CONFIG_FILE);

@@ -19,11 +19,30 @@ namespace GitMC.Lib.Config
         public Side Side { get; set; } = Side.Both;
         public EntryFeature Feature { get; set; } = new EntryFeature();
         
+        public EntryMod Clone() =>
+            new EntryMod {
+                Name        = Name,
+                Description = Description,
+                Links       = Links?.Clone(),
+                Version = Version,
+                Source  = Source,
+                MD5     = MD5,
+                Side    = Side,
+                Feature = Feature?.Clone()
+            };
+        
         public static implicit operator EntryMod(string value) =>
             new EntryMod { Source = value };
         
         
         public class EntryFeature : List<string> {
+            
+            public EntryFeature Clone()
+            {
+                var clone = new EntryFeature();
+                clone.AddRange(this);
+                return clone;
+            }
             
             public static implicit operator EntryFeature(string value) =>
                 new EntryFeature { value };
