@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.CommandLineUtils;
 using GitMC.Lib;
 using GitMC.Lib.Config;
+using GitMC.Lib.Curse;
 using GitMC.Lib.Mods;
 using GitMC.Lib.Net;
 
@@ -40,6 +41,7 @@ namespace GitMC.CLI.Commands
                 List<DownloadedMod> downloaded;
                 using (var modsCache = new FileCache(Path.Combine(Constants.CachePath, "mods")))
                 using (var downloader = new ModpackDownloader(modsCache)
+                        .WithSourceHandler(new ModSourceCurse())
                         .WithSourceHandler(new ModSourceURL()))
                     downloaded = await downloader.Run(build);
                 
