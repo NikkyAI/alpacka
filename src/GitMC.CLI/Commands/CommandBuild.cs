@@ -21,7 +21,7 @@ namespace GitMC.CLI.Commands
             
             OnExecute(async () => {
                 // TODO: Find root directory with pack config file.
-                var directory = ".";
+                var directory = Directory.GetCurrentDirectory();
                 
                 var config = ModpackConfig.LoadYAML(directory);
                 var build  = config.Clone();
