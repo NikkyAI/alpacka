@@ -31,9 +31,9 @@ namespace GitMC.Lib.Net
         public void Dispose()
         {
             if (_disposed) return;
+            _disposed = true;
             Directory.Delete(_tempDir, true);
             GC.SuppressFinalize(this);
-            _disposed = true;
         }
         
         

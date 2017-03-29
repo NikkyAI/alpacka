@@ -1,4 +1,5 @@
 using System.IO;
+using Newtonsoft.Json;
 
 namespace GitMC.Lib.Net
 {
@@ -7,7 +8,8 @@ namespace GitMC.Lib.Net
         /// <summary> Original download URL of the file. </summary>
         public string URL { get; }
         /// <summary> Path of the downloaded file on disk. </summary>
-        public string Path { get; private set; }
+        [JsonIgnore]
+        public string Path { get; internal set; }
         /// <summary> Original file name of the downloaded file suggested by the webserver (may be null). </summary>
         public string FileName { get; }
         /// <summary> MD5 hash of the downloaded file. </summary>

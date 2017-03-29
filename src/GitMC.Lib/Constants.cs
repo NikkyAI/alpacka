@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using GitMC.Lib.Net;
 
 namespace GitMC.Lib
 {
@@ -23,8 +22,5 @@ namespace GitMC.Lib
                 ?? Environment.GetEnvironmentVariable("XDG_CONFIG_HOME")
                 ?? Path.Combine(Environment.GetEnvironmentVariable("HOME"), ".config")
             , "gitMC");
-        
-        public static FileCache ModsCache { get; } =
-            new FileCache(Path.Combine(CachePath, "mods"));
     }
 }

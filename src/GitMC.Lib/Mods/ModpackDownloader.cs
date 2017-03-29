@@ -13,11 +13,10 @@ namespace GitMC.Lib.Mods
         private readonly IFileDownloader _fileDownloader;
         private readonly List<IModSource> _sources = new List<IModSource>();
         
-        public ModpackDownloader(IFileDownloader fileDownloader = null)
-        {
-            _fileDownloader = fileDownloader
-                ?? new FileDownloaderURL(Constants.ModsCache);
-        }
+        public ModpackDownloader(FileCache modsCache)
+            : this(new FileDownloaderURL(modsCache)) {  }
+        public ModpackDownloader(IFileDownloader fileDownloader)
+            { _fileDownloader = fileDownloader; }
         
         ~ModpackDownloader() => Dispose();
         

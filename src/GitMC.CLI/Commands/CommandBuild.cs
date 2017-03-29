@@ -37,25 +37,20 @@ namespace GitMC.CLI.Commands
                     mod.Version = config.Defaults.Version.ToString().ToLowerInvariant();
                 
                 List<DownloadedMod> downloaded;
-                using (var downloader = new ModpackDownloader()
+                using (var modsCache = new FileCache(Path.Combine(Constants.CachePath, "mods")))
+                using (var downloader = new ModpackDownloader(modsCache)
                         .WithSourceHandler(new ModSourceURL()))
                     downloaded = await downloader.Run(build);
                 
-                var modsDir = Path.Combine(directory, Constants.MODS_DIR);
+                var modsDir = Path.Combine(directory, Constants.MC_MODS_DIR);
                 if (Directory.Exists(modsDir))
                     Directory.Delete(modsDir, true);
                 Directory.CreateDirectory(modsDir);
                 
-                foreach (var downloadedMod in downloaded) {
-                    var fileName = downloadedMod.File.FileName
-                        ?? $"{ downloadedMod.Mod.Name }-{ downloadedMod.Mod.Version }.jar";
-                    File.Copy(downloadedMod.File.Path, Path.Combine(modsDir, fileName));
-                }
+                foreach (var downloadedMod in downloaded)
+                    File.Copy(downloadedMod.File.Path, Path.Combine(modsDir, downloadedMod.File.FileName));
                 
                 build.SaveJSON(directory, pretty: true);
-                
-                // TODO: This is ugly. Don't use static file cache?
-                Constants.ModsCache.Save();
                 
                 return 0;
             });

@@ -7,12 +7,13 @@ using Newtonsoft.Json;
 
 namespace GitMC.Lib.Net
 {
-    public class FileCache
+    public class FileCache : IDisposable
     {
-        private static readonly string CACHE_LIST = "cache.json";
+        private static readonly string CACHE_LIST_FILE = "cache.json";
         
         private readonly Dictionary<string, Task<DownloadedFile>> _dict =
             new Dictionary<string, Task<DownloadedFile>>();
+        private bool _disposed = false;
         
         public string CacheDirectory { get; }
         public string CacheListPath { get; }
@@ -21,25 +22,34 @@ namespace GitMC.Lib.Net
         {
             Directory.CreateDirectory(directory);
             CacheDirectory = directory;
-            CacheListPath  = Path.Combine(CacheDirectory, CACHE_LIST);
+            CacheListPath  = Path.Combine(CacheDirectory, CACHE_LIST_FILE);
             
             if (File.Exists(CacheListPath)) {
                 var files = JsonConvert.DeserializeObject<DownloadedFile[]>(
                     File.ReadAllText(CacheListPath));
-                foreach (var file in files)
+                foreach (var file in files) {
+                    file.Path = Path.Combine(directory, file.FileName);
+                    if (!File.Exists(file.Path)) continue;
                     _dict.Add(file.FileName, Task.FromResult(file));
+                }
             }
         }
         
-        public void Save()
+        ~FileCache() => Dispose();
+        
+        public void Dispose()
         {
+            if (_disposed) return;
+            _disposed = true;
             var files = _dict.Values
                 .Where(task => task.IsCompleted)
                 .Select(task => task.Result)
                 .ToArray();
             var str = JsonConvert.SerializeObject(files, Formatting.Indented);
             File.WriteAllText(CacheListPath, str);
+            GC.SuppressFinalize(this);
         }
+        
         
         public Task<DownloadedFile> Get(string name, Func<Task<DownloadedFile>> factory)
         { lock (_dict) {
