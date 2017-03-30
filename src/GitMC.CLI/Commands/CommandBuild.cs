@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Collections.Generic;
 using Microsoft.Extensions.CommandLineUtils;
 using GitMC.Lib;
@@ -47,7 +48,10 @@ namespace GitMC.CLI.Commands
                     Directory.Delete(modsDir, true);
                 Directory.CreateDirectory(modsDir);
                 
-                foreach (var downloadedMod in downloaded)
+                build.Mods = downloaded.Select(d => d.Mod).ToList();
+                
+                //temporary because CommandUpdate does not exist yet
+                foreach (var downloadedMod in downloaded.Where(d => d.Mod.Side.IsClient()))
                     File.Copy(downloadedMod.File.Path, Path.Combine(modsDir, downloadedMod.File.FileName));
                 
                 build.SaveJSON(directory, pretty: true);

@@ -5,8 +5,8 @@ namespace GitMC.Lib
 {
     public static class Constants
     {
-        public static readonly string MC_MODS_DIR   = "mods/";
-        public static readonly string MC_CONFIG_DIR = "config/";
+        public static readonly string MC_MODS_DIR   = "mods";
+        public static readonly string MC_CONFIG_DIR = "config";
         
         public static readonly string PACK_CONFIG_FILE = "packconfig.yaml";
         public static readonly string PACK_BUILD_FILE  = "packbuild.json";
