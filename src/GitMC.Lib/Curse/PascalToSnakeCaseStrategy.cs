@@ -8,25 +8,19 @@ namespace GitMC.Lib.Curse
         protected override string ResolvePropertyName(string name)
         {
             var str = new StringBuilder();
-            for(var i = 0; i < name.Length; i++)
-            {
+            for (var i = 0; i < name.Length; i++) {
                 var c = name[i];
-                if(char.IsUpper(c)) {
-                    if (i > 0)
-                    {
-                        var _c = name[i-1];
-                        if(char.IsLower(_c))
-                        {
+                if (char.IsUpper(c)) {
+                    if (i > 0) {
+                        var _c = name[i - 1];
+                        if (char.IsLower(_c))
                             str.Append('_');
-                        }
                     }
                     c = char.ToLower(c);
                 }
                 str.Append(c);
             }
-            var result = str.ToString();
-            
-            return result;
+            return str.ToString();
         }
     }
 }

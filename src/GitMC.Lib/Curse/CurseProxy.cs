@@ -1,24 +1,24 @@
 using System;
-using System.Threading.Tasks;
+using System.Collections.Concurrent;
 using System.IO;
-using RestEase;
+using System.Net;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using Newtonsoft.Json.Serialization;
-using System.Net;
-using System.Collections.Concurrent;
+using RestEase;
 
 namespace GitMC.Lib.Curse
 {
-    //TODO: move or remove 
+    // TODO: move or remove
     public static class PrettyPrintExtensions
     {
-        private static JsonSerializerSettings settings = 
+        private static readonly JsonSerializerSettings settings =
             new JsonSerializerSettings {
                 Formatting = Formatting.Indented,
-                NullValueHandling = NullValueHandling.Ignore
-            };
+                NullValueHandling = NullValueHandling.Ignore };
+        
         public static string ToPrettyJson(this object obj) => JsonConvert.SerializeObject(obj, settings);
     }
     
@@ -45,66 +45,56 @@ namespace GitMC.Lib.Curse
             [Header("Authorization")]
             string Authorization { get; set; }
     
-            [Get("addon/{addon_id}")]
+            [Get("addon/{addonId}")]
             [AllowAnyStatusCode]
-            Task<Response<Addon>> Addon([Path("addon_id")] int addon);
+            Task<Response<Addon>> Addon([Path("addonId")] int addon);
             
-            [Get("addon/{addon_id}/description")]
+            [Get("addon/{addonId}/description")]
             [AllowAnyStatusCode]
-            Task<Response<AddonDescription>> AddonDescription([Path("addon_id")] int addon);
+            Task<Response<AddonDescription>> AddonDescription([Path("addonId")] int addon);
             
-            [Get("addon/{addon_id}/files")]
+            [Get("addon/{addonId}/files")]
             [AllowAnyStatusCode]
-            Task<Response<AddonFiles>> AddonFiles([Path("addon_id")] int addon);
+            Task<Response<AddonFiles>> AddonFiles([Path("addonId")] int addon);
             
-            [Get("addon/{addon_id}/file/{file_id}")]
+            [Get("addon/{addonId}/file/{file_id}")]
             [AllowAnyStatusCode]
-            Task<Response<AddonFile>> AddonFile([Path("addon_id")] int addon, [Path("file_id")] int file);
+            Task<Response<AddonFile>> AddonFile([Path("addonId")] int addon, [Path("file_id")] int file);
             
-            [Get("addon/{addon_id}/file/{file_id}/changelog")]
+            [Get("addon/{addonId}/file/{file_id}/changelog")]
             [AllowAnyStatusCode]
-            Task<Response<AddonFileChangelog>> AddonFileChangelog([Path("addon_id")] int addon, [Path("file_id")] int file);
+            Task<Response<AddonFileChangelog>> AddonFileChangelog([Path("addonId")] int addon, [Path("file_id")] int file);
         }
         
-        public static async Task<CurseStatus> GetStatus() 
+        public static async Task<CurseStatus> GetStatus()
         {
             var settings = new JsonSerializerSettings {
                     NullValueHandling = NullValueHandling.Ignore,
-                    ContractResolver = new DefaultContractResolver {
-                            NamingStrategy = new PascalToSnakeCaseStrategy()
-                        },
-                    MissingMemberHandling = MissingMemberHandling.Error
-                };
+                    ContractResolver = new DefaultContractResolver
+                        { NamingStrategy = new PascalToSnakeCaseStrategy() },
+                    MissingMemberHandling = MissingMemberHandling.Error };
             var api = new RestClient("https://curse-rest-proxy.azurewebsites.net/api")
-                {
-                    JsonSerializerSettings = settings
-                }.For<ICurseProxyApi>();
+                { JsonSerializerSettings = settings }
+                .For<ICurseProxyApi>();
             var response = await api.Status();
-            var status = response.GetContent();
-            return status;
+            return response.GetContent();
         }
         
-        private static Lazy<Task<ICurseProxyApi>> LazyApi = new Lazy<Task<ICurseProxyApi>>(async () => 
-        {
+        private static Lazy<Task<ICurseProxyApi>> LazyApi = new Lazy<Task<ICurseProxyApi>>(async () => {
             var settings = new JsonSerializerSettings {
-                    NullValueHandling = NullValueHandling.Ignore,
-                    ContractResolver = new DefaultContractResolver {
-                            NamingStrategy = new PascalToSnakeCaseStrategy()
-                        },
-                    MissingMemberHandling = MissingMemberHandling.Error
-                };
-                var api = new RestClient("https://curse-rest-proxy.azurewebsites.net/api")
-                {
-                    JsonSerializerSettings = settings
-                }.For<ICurseProxyApi>();
+                NullValueHandling = NullValueHandling.Ignore,
+                ContractResolver = new DefaultContractResolver
+                    { NamingStrategy = new PascalToSnakeCaseStrategy() },
+                MissingMemberHandling = MissingMemberHandling.Error };
+            var api = new RestClient("https://curse-rest-proxy.azurewebsites.net/api")
+                { JsonSerializerSettings = settings }
+                .For<ICurseProxyApi>();
             return await Authenticate(api);
         });
         
-        
         private static async Task<ICurseProxyApi> Authenticate(ICurseProxyApi api = null) 
         {
-            if (api == null)
-                api = await LazyApi.Value;
+            if (api == null) api = await LazyApi.Value;
             
             Console.WriteLine("Authenticate");
             
@@ -114,7 +104,7 @@ namespace GitMC.Lib.Curse
                 .WithNamingConvention(new CamelCaseNamingConvention())
                 .Build();
                 
-            //TODO: ask for username / password -> save to config
+            // TODO: ask for username / password -> save to config
             
             LoginRequest auth;
             using (var reader = new StreamReader(File.OpenRead(path)))
@@ -123,124 +113,143 @@ namespace GitMC.Lib.Curse
             var response = await api.Authenticate(auth);
             var authResponse = response.GetContent();
             
-            var token = $"Token {authResponse.Session.UserId}:{authResponse.Session.Token}";
-            if(authResponse.Status != AuthenticationStatus.Success) {
+            var token = $"Token { authResponse.Session.UserId }:{ authResponse.Session.Token }";
+            if (authResponse.Status != AuthenticationStatus.Success)
                 throw new Exception($"authentication failed with status { authResponse.Status } ");
-            }
             api.Authorization = token;
             
-            Console.WriteLine($"auth token received: { token } "); //TODO: log debug
+            Console.WriteLine($"auth token received: { token } "); // TODO: log debug
             return api;
         }
         
-        private static ConcurrentDictionary<int, Task<Addon>> AddonTasks = new ConcurrentDictionary<int, Task<Addon>>();
-        public static Task<Addon> GetAddon(int addon_id) => AddonTasks.GetOrAdd(addon_id, (id) => _GetAddon(id));
-        private static async Task<Addon> _GetAddon(int addon_id) 
+        // Get Addon
+        
+        private static readonly ConcurrentDictionary<int, Task<Addon>> _addonTasks =
+            new ConcurrentDictionary<int, Task<Addon>>();
+        
+        public static Task<Addon> GetAddon(int addonId) =>
+            _addonTasks.GetOrAdd(addonId, id => GetAddonInternal(id));
+        
+        private static async Task<Addon> GetAddonInternal(int addonId)
         {
            var api = await LazyApi.Value;
             
-            Console.WriteLine($"getAddon {addon_id}"); //TODO: verbose logging
-            var response = await api.Addon(addon_id);
-            if (!response.ResponseMessage.IsSuccessStatusCode)
-            {
-                if(response.ResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
-                {
+            Console.WriteLine($"getAddon { addonId }"); // TODO: verbose logging
+            var response = await api.Addon(addonId);
+            if (!response.ResponseMessage.IsSuccessStatusCode) {
+                if (response.ResponseMessage.StatusCode == HttpStatusCode.Unauthorized) {
                     await Authenticate();
-                    return await _GetAddon(addon_id);
+                    return await GetAddonInternal(addonId);
                 }
-                throw new Exception($"getAddon {addon_id} failed with status code {response.ResponseMessage.StatusCode}");
+                throw new Exception($"getAddon { addonId } failed with status code { response.ResponseMessage.StatusCode }");
             }
             var addon = response.GetContent();
             
             return addon;
         }
-        private static ConcurrentDictionary<int, Task<AddonDescription>> AddonDescriptionTasks = new ConcurrentDictionary<int, Task<AddonDescription>>();
-        public static Task<AddonDescription> GetAddonDescription(int addon_id) => AddonDescriptionTasks.GetOrAdd(addon_id, (id) => _GetAddonDescription(id));
-        private static async Task<AddonDescription> _GetAddonDescription(int addon_id) 
+        
+        // Get Addon Description
+        
+        private static readonly ConcurrentDictionary<int, Task<AddonDescription>> _addonDescriptionTasks =
+            new ConcurrentDictionary<int, Task<AddonDescription>>();
+        
+        public static Task<AddonDescription> GetAddonDescription(int addonId) =>
+            _addonDescriptionTasks.GetOrAdd(addonId, id => GetAddonDescriptionInternal(id));
+        
+        private static async Task<AddonDescription> GetAddonDescriptionInternal(int addonId)
         {
             var api = await LazyApi.Value;
             
-            Console.WriteLine($"getAddonDescption {addon_id}"); //TODO: verbose logging
-            var response = await api.AddonDescription(addon_id);
-            if (!response.ResponseMessage.IsSuccessStatusCode)
-            {
-                if(response.ResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
-                {
+            Console.WriteLine($"getAddonDescption { addonId }"); // TODO: verbose logging
+            var response = await api.AddonDescription(addonId);
+            if (!response.ResponseMessage.IsSuccessStatusCode) {
+                if (response.ResponseMessage.StatusCode == HttpStatusCode.Unauthorized) {
                     await Authenticate();
-                    return await _GetAddonDescription(addon_id);
+                    return await GetAddonDescriptionInternal(addonId);
                 }
-                throw new Exception($"getAddonDescption {addon_id} failed with status code {response.ResponseMessage.StatusCode}");
+                throw new Exception($"getAddonDescption { addonId } failed with status code { response.ResponseMessage.StatusCode }");
             }
             var addonDescription = response.GetContent();
             
             return addonDescription;
         }
         
-        private static ConcurrentDictionary<int, Task<AddonFiles>> AddonFilesTasks = new ConcurrentDictionary<int, Task<AddonFiles>>();
-        public static Task<AddonFiles> GetAddonFiles(int addon_id) => AddonFilesTasks.GetOrAdd(addon_id, (id) => _GetAddonFiles(id));
-        private static async Task<AddonFiles> _GetAddonFiles(int addon_id) 
+        // Get Addon Files
+        
+        private static readonly ConcurrentDictionary<int, Task<AddonFiles>> AddonFilesTasks =
+            new ConcurrentDictionary<int, Task<AddonFiles>>();
+        
+        public static Task<AddonFiles> GetAddonFiles(int addonId) =>
+            AddonFilesTasks.GetOrAdd(addonId, id => GetAddonFilesInternal(id));
+        
+        private static async Task<AddonFiles> GetAddonFilesInternal(int addonId)
         {
             var api = await LazyApi.Value;
             
-            Console.WriteLine($"getAddonFiles {addon_id}"); //TODO: verbose logging
-            var response = await api.AddonFiles(addon_id);
-            if (!response.ResponseMessage.IsSuccessStatusCode)
-            {
-                if(response.ResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
-                {
+            Console.WriteLine($"getAddonFiles { addonId }"); // TODO: verbose logging
+            var response = await api.AddonFiles(addonId);
+            if (!response.ResponseMessage.IsSuccessStatusCode) {
+                if (response.ResponseMessage.StatusCode == HttpStatusCode.Unauthorized) {
                     await Authenticate();
-                    return await _GetAddonFiles(addon_id);
+                    return await GetAddonFilesInternal(addonId);
                 }
-                throw new Exception($"GetAddonFiles {addon_id} failed with status code {response.ResponseMessage.StatusCode}");
+                throw new Exception($"GetAddonFiles { addonId } failed with status code { response.ResponseMessage.StatusCode }");
             }
             var addonFiles = response.GetContent();
             
             return addonFiles;
         }
         
-        private static ConcurrentDictionary<Tuple<int,int>, Task<AddonFile>> AddonFileTasks = new ConcurrentDictionary<Tuple<int,int>, Task<AddonFile>>();
-        public static Task<AddonFile> GetAddonFile(int addon_id, int file_id) => AddonFileTasks.GetOrAdd(Tuple.Create(addon_id, file_id), (id) => _GetAddonFile(id.Item1, id.Item2));
-        private static async Task<AddonFile> _GetAddonFile(int addon_id, int file_id) 
+        // Get Addon File
+        
+        private static readonly ConcurrentDictionary<Tuple<int, int>, Task<AddonFile>> AddonFileTasks =
+            new ConcurrentDictionary<Tuple<int, int>, Task<AddonFile>>();
+        
+        public static Task<AddonFile> GetAddonFile(int addonId, int fileId) =>
+            AddonFileTasks.GetOrAdd(Tuple.Create(addonId, fileId), id => GetAddonFileInternal(id.Item1, id.Item2));
+        
+        private static async Task<AddonFile> GetAddonFileInternal(int addonId, int fileId) 
         {
             var api = await LazyApi.Value;
             
-            Console.WriteLine($"getAddonFile {addon_id} {file_id}"); //TODO: verbose logging
-            var response = await api.AddonFile(addon_id, file_id);
-            if (!response.ResponseMessage.IsSuccessStatusCode)
-            {
-                if(response.ResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
-                {
+            Console.WriteLine($"getAddonFile { addonId } { fileId }"); // TODO: verbose logging
+            var response = await api.AddonFile(addonId, fileId);
+            if (!response.ResponseMessage.IsSuccessStatusCode) {
+                if (response.ResponseMessage.StatusCode == HttpStatusCode.Unauthorized) {
                     await Authenticate();
-                    return await _GetAddonFile(addon_id, file_id);
+                    return await GetAddonFileInternal(addonId, fileId);
                 }
-                throw new Exception($"GetAddonFile {addon_id} {file_id} failed with status code {response.ResponseMessage.StatusCode}");
+                throw new Exception($"GetAddonFile { addonId } { fileId } failed with status code { response.ResponseMessage.StatusCode }");
             }
             var addonFile = response.GetContent();
             
             return addonFile;
         }
         
-        private static ConcurrentDictionary<Tuple<int,int>, Task<AddonFileChangelog>> AddonFileChangelogTasks = new ConcurrentDictionary<Tuple<int,int>, Task<AddonFileChangelog>>();
-        public static Task<AddonFileChangelog> GetAddonFileChangelog(int addon_id, int file_id) => AddonFileChangelogTasks.GetOrAdd(Tuple.Create(addon_id, file_id), (id) => _GetAddonFileChangelog(id.Item1, id.Item2));
-        private static async Task<AddonFileChangelog> _GetAddonFileChangelog(int addon_id, int file_id) 
+        // Get Addon File Changelog
+        
+        private static readonly ConcurrentDictionary<Tuple<int, int>, Task<AddonFileChangelog>> AddonFileChangelogTasks =
+            new ConcurrentDictionary<Tuple<int, int>, Task<AddonFileChangelog>>();
+        
+        public static Task<AddonFileChangelog> GetAddonFileChangelog(int addonId, int fileId) =>
+            AddonFileChangelogTasks.GetOrAdd(Tuple.Create(addonId, fileId), id => GetAddonFileChangelogInternal(id.Item1, id.Item2));
+        
+        private static async Task<AddonFileChangelog> GetAddonFileChangelogInternal(int addonId, int fileId) 
         {
            var api = await LazyApi.Value;
             
-            Console.WriteLine($"getAddonFileChangelog {addon_id} {file_id}"); //TODO: verbose logging
-            var response = await api.AddonFileChangelog(addon_id, file_id);
-            if (!response.ResponseMessage.IsSuccessStatusCode)
-            {
-                if(response.ResponseMessage.StatusCode == HttpStatusCode.Unauthorized)
-                {
+            Console.WriteLine($"getAddonFileChangelog { addonId } { fileId }"); // TODO: verbose logging
+            var response = await api.AddonFileChangelog(addonId, fileId);
+            if (!response.ResponseMessage.IsSuccessStatusCode) {
+                if (response.ResponseMessage.StatusCode == HttpStatusCode.Unauthorized) {
                     await Authenticate();
-                    return await _GetAddonFileChangelog(addon_id, file_id);
+                    return await GetAddonFileChangelogInternal(addonId, fileId);
                 }
-                throw new Exception($"GetAddonFileChangelog {addon_id} {file_id} failed with status code {response.ResponseMessage.StatusCode}");
+                throw new Exception($"GetAddonFileChangelog { addonId } { fileId } failed with status code { response.ResponseMessage.StatusCode }");
             }
             var addonFileChangelog = response.GetContent();
             
             return addonFileChangelog;
         }
     }
-
 }

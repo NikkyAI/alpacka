@@ -1,10 +1,10 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 using GitMC.Lib.Config;
 using GitMC.Lib.Curse;
-using System.Threading.Tasks;
 using GitMC.Lib.Net;
 
 namespace GitMC.Test
@@ -38,10 +38,15 @@ namespace GitMC.Test
                 CurseProxy.GetAddonFile(257572, 2382299),
                 CurseProxy.GetAddonFileChangelog(257572, 2382299)
             );
-            
-            // expect 500 - internal server error
-            // https://github.com/amcoder/Curse.RestProxy/issues/4
-            // CurseProxy.testGetAddonFiles("223008"); //opencomputers
+        }
+        
+        [Fact]
+        // FIXME: Expect 500 - Internal server error
+        // https://github.com/amcoder/Curse.RestProxy/issues/4
+        public void DownloadOpenComputers()
+        {
+            Assert.ThrowsAsync<Exception>(() =>
+                CurseProxy.GetAddonFiles(223008));
         }
         
         [Fact]
@@ -51,7 +56,7 @@ namespace GitMC.Test
             
             var latest = await LatestProjects.Get();
             var rnd = new Random();
-            var randomData = latest.data.OrderBy(x => rnd.Next()).ToList();
+            var randomData = latest.Data.OrderBy(x => rnd.Next()).ToList();
             
             async Task TestAddon(Addon addon)
             {
@@ -59,22 +64,20 @@ namespace GitMC.Test
                 Assert.Equal(addon.Status, realAddon.Status);
                 Assert.Equal(addon.Stage, realAddon.Stage);
                 Assert.Equal(addon.PackageType, realAddon.PackageType);
-                for(int i = 0; i < addon.GameVersionLatestFiles.Count; i++)
-                {
+                for (int i = 0; i < addon.GameVersionLatestFiles.Count; i++)
                     Assert.Equal(addon.GameVersionLatestFiles[i].FileType, realAddon.GameVersionLatestFiles[i].FileType);
-                }
                 
-                foreach(var file in addon.LatestFiles) {
+                foreach (var file in addon.LatestFiles) {
                     var realFile = await CurseProxy.GetAddonFile(addon.Id, file.Id);
-                    for(int i = 0; i < file.Dependencies.Count; i++)
-                    {
+                    for (int i = 0; i < file.Dependencies.Count; i++)
                         Assert.Equal(file.Dependencies[i].Type, realFile.Dependencies[i].Type);
-                    }
                     
                     Assert.Equal(file.FileStatus, realFile.FileStatus);
                     Assert.Equal(file.ReleaseType, realFile.ReleaseType);
                 }
             }
+            
+            // Test with 100 random addons.
             
             var batchSize = 10;
             var all = randomData.Take(100)
