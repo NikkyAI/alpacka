@@ -8,6 +8,7 @@ using GitMC.Lib.Config;
 using GitMC.Lib.Curse;
 using GitMC.Lib.Mods;
 using GitMC.Lib.Net;
+using System.Threading.Tasks;
 
 namespace GitMC.CLI.Commands
 {
@@ -26,40 +27,37 @@ namespace GitMC.CLI.Commands
                 var directory = Directory.GetCurrentDirectory();
                 
                 var config = ModpackConfig.LoadYAML(directory);
-                var build  = config.Clone();
-                                
-                DefaultVersion forgeRecommendation;
-                if (Enum.TryParse(build.ForgeVersion, true, out forgeRecommendation))
-                    build.ForgeVersion = (await ForgeVersionData.Download())
-                        .GetRecent(build.MinecraftVersion, forgeRecommendation)
-                        .GetFullVersion();
-                
-                // If any mod versions are not set, set them to the default now (recommended or latest).
-                foreach (var mod in build.Mods) if (mod.Version == null)
-                    mod.Version = config.Defaults.Version.ToString().ToLowerInvariant();
-                
-                List<DownloadedMod> downloaded;
-                using (var modsCache = new FileCache(Path.Combine(Constants.CachePath, "mods")))
-                using (var downloader = new ModpackDownloader(modsCache)
-                        .WithSourceHandler(new ModSourceCurse())
-                        .WithSourceHandler(new ModSourceURL()))
-                    downloaded = await downloader.Run(build);
-                
-                var modsDir = Path.Combine(directory, Constants.MC_MODS_DIR);
-                if (Directory.Exists(modsDir))
-                    Directory.Delete(modsDir, true);
-                Directory.CreateDirectory(modsDir);
-                
-                build.Mods = downloaded.Select(d => d.Mod).ToList();
-                
-                //temporary because CommandUpdate does not exist yet
-                foreach (var downloadedMod in downloaded.Where(d => d.Mod.Side.IsClient()))
-                    File.Copy(downloadedMod.File.Path, Path.Combine(modsDir, downloadedMod.File.FileName));
+                var build  = await Build(config);
                 
                 build.SaveJSON(directory, pretty: true);
                 
                 return 0;
             });
+        }
+        
+        public static async Task<ModpackVersion> Build(ModpackConfig config)
+        {
+            var build  = config.Clone();
+            
+            DefaultVersion forgeRecommendation;
+            if (Enum.TryParse(build.ForgeVersion, true, out forgeRecommendation))
+                build.ForgeVersion = (await ForgeVersionData.Download())
+                    .GetRecent(build.MinecraftVersion, forgeRecommendation)
+                    .GetFullVersion();
+            
+            // If any mod versions are not set, set them to the default now (recommended or latest).
+            foreach (var mod in build.Mods) if (mod.Version == null)
+                mod.Version = config.Defaults.Version.ToString().ToLowerInvariant();
+            
+            List<DownloadedMod> downloaded;
+            using (var modsCache = new FileCache(Path.Combine(Constants.CachePath, "mods")))
+            using (var downloader = new ModpackDownloader(modsCache)
+                    .WithSourceHandler(new ModSourceCurse())
+                    .WithSourceHandler(new ModSourceURL()))
+                downloaded = await downloader.Run(build);
+            
+            build.Mods = downloaded.Select(d => d.Mod).ToList();
+            return build;
         }
     }
 }

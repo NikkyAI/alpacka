@@ -11,17 +11,6 @@ using RestEase;
 
 namespace GitMC.Lib.Curse
 {
-    // TODO: move or remove
-    public static class PrettyPrintExtensions
-    {
-        private static readonly JsonSerializerSettings settings =
-            new JsonSerializerSettings {
-                Formatting = Formatting.Indented,
-                NullValueHandling = NullValueHandling.Ignore };
-        
-        public static string ToPrettyJson(this object obj) => JsonConvert.SerializeObject(obj, settings);
-    }
-    
     public class CurseStatus
     {
         public string CurseRestProxy { get; set; }

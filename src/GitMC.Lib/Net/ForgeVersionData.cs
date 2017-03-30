@@ -40,7 +40,10 @@ namespace GitMC.Lib.Net
         } }
         
         public ForgeVersion this[string version] { get {
-            throw new NotImplementedException(); // TODO: Implement this!
+            int buildNumber;
+            if(int.TryParse(version.Split('.').Last(), out buildNumber))
+                return BuildVersions[buildNumber];
+            throw new ArgumentException("version does not contain a valid buildnumber"); // TODO: Implement this!
         } }
         
         
