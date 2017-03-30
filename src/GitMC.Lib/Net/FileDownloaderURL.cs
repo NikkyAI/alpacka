@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace GitMC.Lib.Net
 {
@@ -11,6 +12,7 @@ namespace GitMC.Lib.Net
     {
         private static readonly int MAX_REDIRECTS = 8;
         
+        private static ILogger _logger = Logger.Create<FileDownloaderURL>();
         private static readonly Random _rnd = new Random();
         private static HttpClient _client = new HttpClient();
         
@@ -23,6 +25,7 @@ namespace GitMC.Lib.Net
             _cache = cache;
             _tempDir = Path.Combine(Path.GetTempPath(), $"gitmc-{ _rnd.Next() }");
             Directory.CreateDirectory(_tempDir);
+            _logger.LogDebug("Created with temp dir {0}", _tempDir);
         }
         
         ~FileDownloaderURL() =>
@@ -33,6 +36,7 @@ namespace GitMC.Lib.Net
             if (_disposed) return;
             _disposed = true;
             Directory.Delete(_tempDir, true);
+            _logger.LogDebug("Deleted temp dir {0}", _tempDir);
             GC.SuppressFinalize(this);
         }
         
@@ -60,6 +64,7 @@ namespace GitMC.Lib.Net
             if (fileName == null)
                 throw new NoFileNameException(url);
             
+            // FIXME: Allow cache to be "updated" - checking ETag / LastModified.
             return await _cache.Get(fileName, async () => {
                 
                 var transform = new MD5Transform();
@@ -70,7 +75,7 @@ namespace GitMC.Lib.Net
                 var md5 = BitConverter.ToString(transform.Hash)
                     .Replace("-", "").ToLowerInvariant();
                 
-                Console.WriteLine($"Downloaded '{ fileName }'");
+                _logger.LogInformation("Downloaded {0}", fileName);
                 return new DownloadedFile(url, tempPath, fileName, md5);
                 
             });

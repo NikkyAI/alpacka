@@ -39,7 +39,7 @@ namespace GitMC.CLI.Commands
                 }
                 
                 Directory.CreateDirectory(directory);
-
+                
                 // TODO: Move this to a utility method. (In GitMC.Lib?)
                 var resourceStream = GetType().GetTypeInfo().Assembly
                     .GetManifestResourceStream("GitMC.CLI.Resources.packconfig.default.yaml");
@@ -47,27 +47,21 @@ namespace GitMC.CLI.Commands
                 using (var reader = new StreamReader(resourceStream))
                     defaultConfig = reader.ReadToEnd();
                 
-                var packName = optName.Value() ??
-                    // If dictionary argument is set and it doesn't
-                    // contain path separators, use it as pack name.
-                    ((argDirectory.Value?.IndexOfAny(@"/\".ToCharArray()) == -1)
-                        ? argDirectory.Value : "...");
+                var packName = optName.Value() ?? Path.GetDirectoryName(directory);
                 var packDesc = optDescription.Value() ?? "...";
                 var authors = optAuthors.HasValue()
                     ? string.Join(", ", optAuthors.Values)
                     : Environment.GetEnvironmentVariable("USERNAME") ?? "...";
                 
-                var forgeData    = ForgeVersionData.Download().Result;
-                var mcVersion    = forgeData.GetRecentMCVersion(DefaultVersion.Recommended);
-                var forgeVersion = forgeData.GetRecent(mcVersion, DefaultVersion.Recommended)?.GetFullVersion();
+                var forgeData = ForgeVersionData.Download().Result;
+                var mcVersion = forgeData.GetRecentMCVersion(DefaultVersion.Recommended);
                 
-                defaultConfig = Regex.Replace(defaultConfig, "{{(.+)}}", match => {
-                    switch (match.Groups[1].Value.Trim()) {
+                defaultConfig = Regex.Replace(defaultConfig, @"{{\s*([^\s]+)\s*}}", match => {
+                    switch (match.Groups[1].Value) {
                         case "NAME": return packName;
                         case "DESCRIPTION": return packDesc;
                         case "AUTHORS": return authors;
                         case "MC_VERSION": return mcVersion;
-                        case "FORGE_VERSION": return forgeVersion;
                         default: return "...";
                     }
                 });

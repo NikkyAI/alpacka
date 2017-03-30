@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using GitMC.Lib.Config;
 using GitMC.Lib.Net;
 
@@ -10,6 +11,8 @@ namespace GitMC.Lib.Mods
 {
     public class ModpackDownloader : IDisposable
     {
+        private static readonly ILogger _logger = Logger.Create<ModpackDownloader>();
+        
         private readonly IFileDownloader _fileDownloader;
         private readonly List<IModSource> _sources = new List<IModSource>();
         
@@ -39,6 +42,8 @@ namespace GitMC.Lib.Mods
                 { lock (dependencies) dependencies.Add(dependency); };
             
             while (processingMods.Count > 0) {
+                _logger.LogDebug("Downloading {0} mods ...", processingMods.Count);
+                
                 var isHandlingDependencies = (processingMods != pack.Mods); // Might be useful later.
                 var mods = processingMods.Select(mod => new ModWrapper(mod, _sources)).ToList();
                 
@@ -46,6 +51,8 @@ namespace GitMC.Lib.Mods
                 var noSources = mods.Where(mod => (mod.SourceHandler == null)).Select(mod => mod.Mod).ToList();
                 if (noSources.Count > 0) throw new NoSourceHandlerException(noSources);
                 
+                // Resolve mod sources, for example from "curse:[project name]@[version]" to
+                // "https://minecraft.curseforge.com/projects/[project]/files/[file]/download"
                 await Task.WhenAll(mods.Select(mod => mod.Resolve(pack.MinecraftVersion, addDependency)));
                 // Discard mods whose download URL has not been set.
                 mods = mods.Where(mod => (mod.DownloadURL != null)).ToList();
@@ -60,9 +67,11 @@ namespace GitMC.Lib.Mods
                     // in that case just use the Source as dictionary key.
                     var key = mod.ModInfo?.ModID ?? mod.Mod.Source;
                     if (!modDict.ContainsKey(key)) modDict.Add(key, mod);
-                    else Console.WriteLine($"Debug: Downloaded '{ mod }' multiple times");
+                    else _logger.LogDebug("Downloaded '{ mod }' multiple times", mod);
                 }
                 
+                if (dependencies.Count > 0)
+                    _logger.LogDebug("Found {0} dependencies", dependencies.Count);
                 processingMods = dependencies;
                 dependencies   = new List<EntryMod>();
             }
@@ -97,7 +106,7 @@ namespace GitMC.Lib.Mods
                 try { using (var readStream = File.OpenRead(DownloadedFile.Path))
                     ModInfo = await MCModInfo.Extract(readStream); }
                 catch (Exception ex) {
-                    Console.WriteLine($"Warning: Couldn't load mcmod.info of '{ this }': { ex.Message }");
+                    _logger.LogWarning(0, ex, "Couldn't load mcmod.info of {0}", this);
                     return;
                 }
                 
