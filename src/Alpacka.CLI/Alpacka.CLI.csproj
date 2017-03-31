@@ -10,6 +10,7 @@
     <OutputType>Exe</OutputType>
     <PackageTargetFallback>$(PackageTargetFallback);portable-net451</PackageTargetFallback>
     <RuntimeFrameworkVersion>1.1.1</RuntimeFrameworkVersion>
+    <RuntimeIdentifiers>win7-x64;osx.10.11-x64;ubuntu.16.10-x64</RuntimeIdentifiers>
   </PropertyGroup>
   
   <ItemGroup>
