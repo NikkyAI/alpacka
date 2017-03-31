@@ -4,6 +4,6 @@ namespace GitMC.Lib.Config
     {
         public static readonly EntryDefaults Default = new EntryDefaults();
         
-        public DefaultVersion Version { get; set; } = DefaultVersion.Recommended;
+        public Release Version { get; set; } = Release.Recommended;
     }
 }

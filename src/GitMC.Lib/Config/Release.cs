@@ -1,6 +1,6 @@
 namespace GitMC.Lib.Config
 {
-    public enum DefaultVersion
+    public enum Release
     {
         Recommended,
         Latest

@@ -39,7 +39,7 @@ namespace GitMC.CLI.Commands
         {
             var build  = config.Clone();
             
-            DefaultVersion forgeRecommendation;
+            Release forgeRecommendation;
             if (Enum.TryParse(build.ForgeVersion, true, out forgeRecommendation))
                 build.ForgeVersion = (await ForgeVersionData.Download())
                     .GetRecent(build.MinecraftVersion, forgeRecommendation)

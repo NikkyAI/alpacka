@@ -67,7 +67,7 @@ namespace GitMC.Lib.Curse
                         Source = $"curse:{ dep.AddOnId }",
                         Name = depAddon.Name,
                         Side = mod.Side,
-                        Version = DefaultVersion.Latest.ToString() // avoid crashes from listing files
+                        Version = Release.Latest.ToString() // avoid crashes from listing files
                     };
                     _modToDependencyType[depMod] = dep.Type;
                     addDependency(depMod);
@@ -83,7 +83,7 @@ namespace GitMC.Lib.Curse
         {
             // Console.WriteLine($"find file\n mcVersion: { mcVersion }\n name: { addon.Name }"); // TODO: verbose logging
             // Console.WriteLine($"addon: { addon.ToPrettyJson() }"); // TODO: verbose logging
-            if (string.Equals(mod.Version, DefaultVersion.Recommended.ToString(), StringComparison.OrdinalIgnoreCase)) {
+            if (string.Equals(mod.Version, Release.Recommended.ToString(), StringComparison.OrdinalIgnoreCase)) {
                 
                 try {
                     var addonFiles = await CurseProxy.GetAddonFiles(addon.Id); // FIXME: This can crash with error 500 for OpenComputers, JEI, RFTools etc
@@ -100,7 +100,7 @@ namespace GitMC.Lib.Curse
                     return recommendedFile.Id;
                 } catch(Exception e) { Console.WriteLine($"failed for { addon.Name } with { e.Message }"); }
                 
-            } else if (string.Equals(mod.Version, DefaultVersion.Latest.ToString(), StringComparison.OrdinalIgnoreCase)) {
+            } else if (string.Equals(mod.Version, Release.Latest.ToString(), StringComparison.OrdinalIgnoreCase)) {
                 
                 var latestFile = addon.GameVersionLatestFiles.Find(file => (file.GameVesion == mcVersion));
                 if (latestFile != null) return latestFile.ProjectFileId;

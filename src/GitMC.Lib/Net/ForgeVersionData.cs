@@ -70,13 +70,13 @@ namespace GitMC.Lib.Net
             }
         }
         
-        public string GetRecentMCVersion(DefaultVersion releaseType) =>
+        public string GetRecentMCVersion(Release releaseType) =>
             Promotions.Keys
                 .Where(v => v.EndsWith($"-{ releaseType.ToString().ToLowerInvariant() }"))
                 .Select(v => v.Substring(0, v.LastIndexOf('-')))
                 .OrderByDescending(v => new Version(v)).First();
         
-        public ForgeVersion GetRecent(string mcVersion, DefaultVersion releaseType)
+        public ForgeVersion GetRecent(string mcVersion, Release releaseType)
         {
             var promoStr = $"{ mcVersion }-{ releaseType.ToString().ToLowerInvariant() }";
             int buildNumber;

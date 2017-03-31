@@ -58,8 +58,8 @@ namespace GitMC.CLI.Commands
                     : Environment.GetEnvironmentVariable("USERNAME") ?? "...";
                 
                 var forgeData    = ForgeVersionData.Download().Result;
-                var mcVersion    = forgeData.GetRecentMCVersion(DefaultVersion.Recommended);
-                var forgeVersion = forgeData.GetRecent(mcVersion, DefaultVersion.Recommended)?.GetFullVersion();
+                var mcVersion    = forgeData.GetRecentMCVersion(Release.Recommended);
+                var forgeVersion = forgeData.GetRecent(mcVersion, Release.Recommended)?.GetFullVersion();
                 
                 defaultConfig = Regex.Replace(defaultConfig, "{{(.+)}}", match => {
                     switch (match.Groups[1].Value.Trim()) {
