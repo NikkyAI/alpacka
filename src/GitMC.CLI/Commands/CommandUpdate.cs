@@ -9,6 +9,7 @@ using GitMC.Lib;
 using GitMC.Lib.Config;
 using GitMC.Lib.Mods;
 using GitMC.Lib.Net;
+using GitMC.Lib.Instances;
 
 namespace GitMC.CLI.Commands
 {

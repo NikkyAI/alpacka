@@ -5,7 +5,7 @@ using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using GitMC.Lib;
 using GitMC.Lib.Git;
-using GitMC.Lib.MultiMC;
+using GitMC.Lib.Instances.MultiMC;
 
 namespace GitMC.CLI.Commands
 {
@@ -14,7 +14,7 @@ namespace GitMC.CLI.Commands
         public CommandMultiMC()
         {
             Name = "multimc";
-            Description = "install a gitmc pack into MultiMC";
+            Description = "Install a gitmc pack into MultiMC";
             
             var argPackUrl = Argument("[url]",
                 "pack url");
@@ -80,7 +80,7 @@ namespace GitMC.CLI.Commands
                 
                 Directory.Move(tempDir, mcDirectory);
                 
-                var instanceCfg = new Instance {
+                var instanceCfg = new MultiMCInstance {
                     InstanceName = prettyName,
                     IntendedVersion = mcVersion, //is set later
                     Notes = build.Description
