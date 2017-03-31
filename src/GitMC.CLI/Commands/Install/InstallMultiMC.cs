@@ -1,13 +1,11 @@
 using System;
 using System.IO;
 using Microsoft.Extensions.CommandLineUtils;
-using Newtonsoft.Json;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using GitMC.Lib;
 using GitMC.Lib.Git;
 using GitMC.Lib.MultiMC;
-using GitMC.Lib.Config;
 
 namespace GitMC.CLI.Commands
 {
@@ -55,7 +53,7 @@ namespace GitMC.CLI.Commands
                 
                 var tempDir = InstallUtil.Clone(url, directory);
                 
-                ModpackVersion build = await CommandUpdate.GetBuild(tempDir);
+                var build = await CommandUpdate.GetBuild(tempDir);
                 
                 var name = build.Name;
                 var prettyName = build.Name;
@@ -92,9 +90,7 @@ namespace GitMC.CLI.Commands
                 
                 //TODO: add instance to instance group
                 
-                var info = new GitMCInfo{
-                    Type = InstallType.MultiMC
-                };
+                var info = new GitMCInfo { Type = InstallType.MultiMC };
                 info.Save(mcDirectory);
                 
                 Console.WriteLine($"Installed pack {name} in { Path.GetFullPath(mcDirectory) }");

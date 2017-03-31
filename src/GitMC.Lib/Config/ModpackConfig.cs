@@ -6,7 +6,7 @@ using YamlDotNet.Serialization.NodeDeserializers;
 
 namespace GitMC.Lib.Config
 {
-    public class ModpackConfig : ModpackVersion
+    public class ModpackConfig : Modpack
     {
         public EntryDefaults Defaults { get; set; } = EntryDefaults.Default;
         

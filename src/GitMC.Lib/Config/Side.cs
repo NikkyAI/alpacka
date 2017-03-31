@@ -5,6 +5,7 @@ namespace GitMC.Lib.Config
     [Flags]
     public enum Side
     {
+        None   = 0,
         Client = 0b01,
         Server = 0b10,
         Both   = Client | Server

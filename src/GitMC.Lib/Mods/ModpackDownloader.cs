@@ -29,24 +29,39 @@ namespace GitMC.Lib.Mods
         public ModpackDownloader WithSourceHandler(IModSource source)
             { _sources.Add(source); return this; }
         
-        public async Task<List<DownloadedMod>> Run(ModpackVersion pack)
+        
+        /// <summary> Resolves the mods from the specified ModpackConfig and creates a
+        ///           ModpackBuild with all dependencies and sources set to http(s) URLs. </summary>
+        public async Task<ModpackBuild> Resolve(ModpackConfig config) // TODO: Filter side?
         {
-            var processingMods = pack.Mods;
-            var modDict        = new Dictionary<string, ModWrapper>();
-            var dependencies   = new List<EntryMod>();
+            var forgeVersion = config.ForgeVersion;
+            // If forge version is "recommended" or "latest", grab the latest forge version.
+            Release recommendation;
+            if (Enum.TryParse(forgeVersion, true, out recommendation))
+                forgeVersion = (await ForgeVersionData.Download())
+                    .GetRecent(config.MinecraftVersion, recommendation)
+                    .GetFullVersion();
             
+            var processing = config.Mods.Select(mod => mod.Clone()).ToList();
+            var modDict    = new Dictionary<string, ModWrapper>();
+            
+            var dependencies = new List<EntryMod>();
             Action<EntryMod> addDependency = (dependency) =>
                 { lock (dependencies) dependencies.Add(dependency); };
             
-            while (processingMods.Count > 0) {
-                var isHandlingDependencies = (processingMods != pack.Mods); // Might be useful later.
-                var mods = processingMods.Select(mod => new ModWrapper(mod, _sources)).ToList();
+            while (processing.Count > 0) {
+                var mods = processing.Select(mod => new ModWrapper(mod, _sources)).ToList();
                 
                 // See if any if the mods don't have a mod source handler.
                 var noSources = mods.Where(mod => (mod.SourceHandler == null)).Select(mod => mod.Mod).ToList();
                 if (noSources.Count > 0) throw new NoSourceHandlerException(noSources);
                 
-                await Task.WhenAll(mods.Select(mod => mod.Resolve(pack.MinecraftVersion, addDependency)));
+                await Task.WhenAll(mods.Select(mod => {
+                    // If mod version is not set, set it to the config default now (recommended or latest).
+                    if (mod.Mod.Version == null) mod.Mod.Version =
+                        config.Defaults.Version.ToString().ToLowerInvariant();
+                    return mod.Resolve(config.MinecraftVersion, addDependency);
+                }));
                 // Discard mods whose download URL has not been set.
                 mods = mods.Where(mod => (mod.DownloadURL != null)).ToList();
                 
@@ -63,16 +78,26 @@ namespace GitMC.Lib.Mods
                     else Console.WriteLine($"Debug: Downloaded '{ mod }' multiple times");
                 }
                 
-                processingMods = dependencies;
-                dependencies   = new List<EntryMod>();
+                processing   = dependencies;
+                dependencies = new List<EntryMod>();
             }
             
-            return modDict.Values.Select(mod => {
-                // Replace Source with resolved download URL before returning.
+            foreach (var mod in modDict.Values)
                 mod.Mod.Source = mod.DownloadURL;
-                return new DownloadedMod(mod.Mod, mod.DownloadedFile);
-            }).ToList();
+            
+            return new ModpackBuild(config) {
+                ForgeVersion = forgeVersion,
+                Mods = modDict.Values.Select(mod => mod.Mod).ToList()
+            };
         }
+        
+        /// <summary> Downloads all mods from the specified ModpackBuild. </summary>
+        public Task<List<DownloadedMod>> Download(ModpackBuild build) => // TODO: Filter side?
+            Task.WhenAll(build.Mods.Select(mod =>
+                    _fileDownloader.Download(mod.Source)
+                        .ContinueWith(task => new DownloadedMod(mod, task.Result))
+                )).ContinueWith(task => new List<DownloadedMod>(task.Result));
+        
         
         private class ModWrapper
         {
@@ -94,21 +119,21 @@ namespace GitMC.Lib.Mods
             
             public async Task ExtractModInfo()
             {
-                try { using (var readStream = File.OpenRead(DownloadedFile.Path))
-                    ModInfo = await MCModInfo.Extract(readStream); }
-                catch (Exception ex) {
+                try {
+                    using (var readStream = File.OpenRead(DownloadedFile.Path))
+                        ModInfo = await MCModInfo.Extract(readStream);
+                } catch (Exception ex) {
                     Console.WriteLine($"Warning: Couldn't load mcmod.info of '{ this }': { ex.Message }");
                     return;
                 }
                 
                 if (string.IsNullOrEmpty(Mod.Name)) Mod.Name = ModInfo.Name;
                 if (string.IsNullOrEmpty(Mod.Description)) Mod.Description = ModInfo.Description;
-                if (string.IsNullOrEmpty(Mod.Version)) Mod.Version = ModInfo.Version;
+                Mod.Version = ModInfo.Version; // TODO: Warn if version doesn't match up?
                 if (string.IsNullOrEmpty(Mod.Links?.Website)) {
                     if (Mod.Links == null) Mod.Links = new EntryLinks();
                     Mod.Links.Website = ModInfo.URL;
                 }
-                // TODO: Warn if version doesn't match up?
             }
             
             public override string ToString() => (Mod.Name ?? Mod.Source);
@@ -120,7 +145,8 @@ namespace GitMC.Lib.Mods
         public EntryMod Mod { get; }
         public DownloadedFile File { get; }
         
-        public DownloadedMod(EntryMod mod, DownloadedFile file) { Mod = mod; File = file; }
+        public DownloadedMod(EntryMod mod, DownloadedFile file)
+            { Mod = mod; File = file; }
     }
     
     public class DownloaderException : Exception

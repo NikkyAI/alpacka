@@ -79,7 +79,7 @@ namespace GitMC.CLI.Commands
             });
         }
         
-        public static async Task<int> Execute(string directory, ModpackVersion build = null)
+        public static async Task<int> Execute(string directory, ModpackBuild build = null)
         {
             if (build == null) build = await GetBuild(directory);
             
@@ -145,11 +145,11 @@ namespace GitMC.CLI.Commands
             return 0;
         }
         
-        public static async Task<ModpackVersion> GetBuild(string directory)
+        public static async Task<ModpackBuild> GetBuild(string directory)
         {
             var packBuildPath = Path.Combine(directory, Constants.PACK_BUILD_FILE);
             return File.Exists(packBuildPath)
-                ? JsonConvert.DeserializeObject<ModpackVersion>(File.ReadAllText(packBuildPath))
+                ? JsonConvert.DeserializeObject<ModpackBuild>(File.ReadAllText(packBuildPath))
                 : await CommandBuild.Build(ModpackConfig.LoadYAML(directory));
         }
         

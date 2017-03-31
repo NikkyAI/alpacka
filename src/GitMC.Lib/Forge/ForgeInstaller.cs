@@ -11,7 +11,7 @@ namespace GitMC.CLI.Commands
 {
     public static class ForgeInstaller
     {
-        public static async Task<string> InstallServer(string directory, ModpackVersion build, ForgeVersion forge)
+        public static async Task<string> InstallServer(string directory, ModpackBuild build, ForgeVersion forge)
         {
             string forgeUnversalFile =  Path.Combine(directory, $"forge-{build.MinecraftVersion}-{build.ForgeVersion}-universal.jar");
             string forgeFile = Path.Combine(directory, $"forge_server.jar");
@@ -36,7 +36,7 @@ namespace GitMC.CLI.Commands
             return forgeFile;
         }
         
-        public static async Task<string> InstallMultiMC(string directory, ModpackVersion build)
+        public static async Task<string> InstallMultiMC(string directory, ModpackBuild build)
         {
             // install forge
             var forgePatch = Meta.GetForgePatch($"{ build.MinecraftVersion }-{ build.ForgeVersion }");
