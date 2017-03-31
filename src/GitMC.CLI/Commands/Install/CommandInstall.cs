@@ -9,6 +9,7 @@ namespace GitMC.CLI.Commands
             Name = "install";
             Description = "install a gitmc pack";
             
+            Commands.Add(new CommandMultiMC());
             Commands.Add(new CommandServer());
         }
     }

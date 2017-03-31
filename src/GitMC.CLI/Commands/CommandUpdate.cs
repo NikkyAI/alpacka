@@ -96,6 +96,41 @@ namespace GitMC.CLI.Commands
             ForgeVersion forge = forgeData[forgeVersion];
             var info = GitMCInfo.Load(directory);
             
+            if(info.Type == InstallType.MultiMC)
+            {
+                
+                var packInstanceFolder = Directory.GetParent(directory).FullName;
+                var instanceCfgPath = Path.Combine(packInstanceFolder, "instance.cfg");
+                if(File.Exists(instanceCfgPath))
+                {
+                    // this is a multimc instance
+                    
+                    // update minecraft version in instance.cfg
+                    var instanceCfg = File.ReadAllText(instanceCfgPath);
+                    var intendedVersion = $"\nIntendedVersion={mcVersion}";
+                    if(!instanceCfg.Contains(intendedVersion))
+                    {
+                        instanceCfg += intendedVersion;
+                        File.WriteAllText(instanceCfgPath, instanceCfg);
+                    }
+                    
+                    //TODO: copy icon and set icon = gitm_{ name }
+                    
+                    var installedForge = await ForgeInstaller.InstallMultiMC(packInstanceFolder, build);
+                    
+                    Console.WriteLine($"installed forge { installedForge }");
+                } else {
+                    throw new Exception("not a MultiMC instance");
+                }
+                
+                // download mods
+                Console.WriteLine("Downloading mods");
+                var modsDir = Path.Combine(directory, Constants.MC_MODS_DIR);
+                await DownloadMods(build.Mods, Side.Client, modsDir);
+                
+                return 0;
+            }
+                
             if(info.Type == InstallType.Server)
             {
                 var modsDir = Path.Combine(directory, Constants.MC_MODS_DIR);
@@ -105,7 +140,6 @@ namespace GitMC.CLI.Commands
                 var forgeFile = await ForgeInstaller.InstallServer(directory, build, forge);
                 
                 Console.WriteLine($"start forge server by executing {forgeFile}");
-                
                 
                 // TODO: mabye later use ModpackDownloader
                 // List<DownloadedMod> downloaded;
@@ -118,6 +152,7 @@ namespace GitMC.CLI.Commands
                 //     File.Copy(downloadedMod.File.Path, Path.Combine(modsDir, downloadedMod.File.FileName));
                 return 0;
             }
+            
             return 0;
         }
         

@@ -5,6 +5,7 @@ using GitMC.Lib;
 using GitMC.Lib.Config;
 using GitMC.Lib.Net;
 using GitMC.Lib.Util;
+using GitMC.Lib.MultiMC;
 
 namespace GitMC.CLI.Commands
 {
@@ -33,6 +34,18 @@ namespace GitMC.CLI.Commands
             
             File.Copy(forgeUnversalFile, forgeFile, true);
             return forgeFile;
+        }
+        
+        public static async Task<string> InstallMultiMC(string directory, ModpackVersion build)
+        {
+            // install forge
+            var forgePatch = Meta.GetForgePatch($"{ build.MinecraftVersion }-{ build.ForgeVersion }");
+            var patchFolder = Path.Combine(directory, "patches");
+            Directory.CreateDirectory(patchFolder);
+            File.WriteAllText(Path.Combine(patchFolder, "net.minecraftforge.json"), forgePatch);
+            Console.WriteLine($"installed forge { build.ForgeVersion }");
+            
+            return build.ForgeVersion;
         }
     }
 }
