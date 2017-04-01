@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 # go get github.com/aktau/github-release
+# export GITHUB_TOKEN=...
+# works without token, will not create a release
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -10,17 +12,23 @@ function copy_publish() {
     
     PUBLISH_DIR="$DIR/src/$PROJECT/bin/release/$TargetFramework/$TARGET/publish"
     TARGET=${TARGET:-any}
-    TARGET_DIR="$DIR/release/$PROJECT-$TARGET/gitmc"
+    TARGET_DIR="$DIR/release/$PROJECT-$TARGET/$PROJECT/bin"
+    
+    # copy installer scripts in "$DIR/release/$PROJECT-$TARGET/$PROJECT"
     
     rm -r $TARGET_DIR
     mkdir $TARGET_DIR --parent
     echo "'$PUBLISH_DIR' -> '$TARGET_DIR'"
     cp -rf $PUBLISH_DIR -T $TARGET_DIR
+    cp -rf $DIR/scripts/$TARGET -T "$DIR/release/$PROJECT-$TARGET/$PROJECT"
+    if [ "$TARGET" == "any" ] ; then
+        cp -rf $DIR/scripts/wrappers -T "$TARGET_DIR"
+    fi
     
     zipfile="$DIR/release/$PROJECT-$TARGET.zip"
     rm $zipfile
     cd $DIR/release/$PROJECT-$TARGET/
-    zip -fdr $zipfile *
+    zip -r $zipfile *
     
     github-release upload \
         --user NikkyAi \
@@ -84,7 +92,7 @@ branch=$(git symbolic-ref --short -q HEAD)
 echo "branch: $branch"
 if [ "$branch" != "master" ]; then
     echo "you are not on master"
-    exit 1;
+    # exit 1;
 fi
 
 release GitMC.CLI
