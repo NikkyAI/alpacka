@@ -10,6 +10,7 @@ using GitMC.Lib.Config;
 using GitMC.Lib.Mods;
 using GitMC.Lib.Net;
 using GitMC.Lib.Instances;
+using LibGit2Sharp;
 
 namespace GitMC.CLI.Commands
 {
@@ -23,18 +24,19 @@ namespace GitMC.CLI.Commands
             var argVersion = Argument("[version]",
                 "Version to update to, can be a release version (git tag), or any git commit-ish");
             
-            var optDirectory = Option("-d | --directory",
-                "Sets the pack directory", CommandOptionType.SingleValue);
+            var optList = Option("-l | --list",
+                "List all pack versions", CommandOptionType.NoValue);
             
             HelpOption("-? | -h | --help");
             
             OnExecute(async () => {
-                if (argVersion.Value == null)
-                    throw new NotImplementedException("List versions");
-                
-                var directory = optDirectory.HasValue()
+                var directory = /*optDirectory.HasValue()
                     ? Path.GetFullPath(optDirectory.Value())
-                    : Directory.GetCurrentDirectory();
+                    :*/ Directory.GetCurrentDirectory();
+                
+                if(optList.HasValue() || argVersion.Value == null) {
+                    return ListVersions(directory);
+                }
                 
                 // TODO: switch branches and stuff
                 
@@ -80,6 +82,35 @@ namespace GitMC.CLI.Commands
             });
         }
         
+        public static int ListVersions(string directory, bool withLocal = false) {
+            using (var repo = new Repository(directory))
+            {
+                var tip = repo.Head.Tip;
+                Console.WriteLine($"Tip: { repo.Head.FriendlyName }{ tip }");
+                Console.WriteLine("Branches:");
+                foreach(Branch b in repo.Branches.Where(b => b.IsRemote || b.IsTracking))
+                {
+                    var prefix = b.IsCurrentRepositoryHead ? "*" : " ";
+                    var remote = b.IsRemote ? "remote" : "";
+                    var tracking = b.IsTracking ? "tracking" : "";
+                    Console.WriteLine($"{ prefix }{ b.FriendlyName } { remote }{ tracking }");
+                    // Console.WriteLine(string.Format("{0}{1}", b.IsCurrentRepositoryHead ? "*" : " ", b.FriendlyName));
+                }
+                Console.WriteLine("Tags:");
+                foreach (Tag t in repo.Tags.Reverse())
+                {
+                    var target = (Commit) t.Target;
+                    
+                    var prefix = target == tip ? "*" : " ";
+                    var name = t.FriendlyName[0] == 'v' ? t.FriendlyName.Substring(1) : t.FriendlyName;
+                    Console.WriteLine($"{ prefix }{ name }");
+                }
+            }
+            
+            return 0;
+        }
+        
+        //TODO: rename to Install or similar
         public static async Task<int> Execute(string directory, ModpackBuild build = null)
         {
             if (build == null) build = await GetBuild(directory);
