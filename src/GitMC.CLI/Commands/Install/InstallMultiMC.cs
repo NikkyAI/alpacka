@@ -95,7 +95,7 @@ namespace GitMC.CLI.Commands
                 
                 Console.WriteLine($"Installed pack {name} in { Path.GetFullPath(mcDirectory) }");
                 
-                return await CommandUpdate.Execute(instanceFolder, build);
+                return await CommandUpdate.Execute(mcDirectory, build);
                 
                 // await ForgeInstaller.InstallMultiMC(instanceFolder, build);
                 // var modsDir = Path.Combine(mcDirectory, Constants.MC_MODS_DIR);

@@ -11,7 +11,7 @@ namespace GitMC.Lib
         public static readonly string PACK_CONFIG_FILE = "packconfig.yaml";
         public static readonly string PACK_BUILD_FILE  = "packbuild.json";
         
-        public static readonly string INFO_FILE  = ".git/mc.info";
+        public static readonly string INFO_FILE  = Path.Combine(".git", "mc.info");
         
         public static string CachePath { get; } = Path.Combine(
             Environment.GetEnvironmentVariable("LocalAppData")
