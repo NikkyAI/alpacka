@@ -1,5 +1,6 @@
 using System.IO;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace GitMC.Lib
 {
@@ -24,7 +25,9 @@ namespace GitMC.Lib
         private static readonly JsonSerializerSettings settings =
             new JsonSerializerSettings {
                 Formatting = Formatting.Indented,
-                NullValueHandling = NullValueHandling.Ignore };
+                NullValueHandling = NullValueHandling.Ignore,
+                Converters = { new StringEnumConverter { CamelCaseText = true } }
+            };
         
         public static string ToPrettyJson(this object obj) => JsonConvert.SerializeObject(obj, settings);
     }
