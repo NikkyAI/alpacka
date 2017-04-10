@@ -26,7 +26,7 @@ namespace GitMC.CLI.Commands
                 "Version that is released, defaults to current. Cannot be used with -i | --increase");
                 
             var optIncrease = Option("-i | --increase",
-                "Increase the pack version [patch, minor, major] default: patch. Cannot be used with [version]", CommandOptionType.SingleValue);
+                "Increase the pack version [patch, minor, major] Cannot be used with [version]", CommandOptionType.SingleValue);
             
             var optPush = Option("-p | --push",
                 "automatically push the release. Pushes 'release' branch and tag to 'origin', also sets upstream for 'release' branch. Does NOT push other tags", CommandOptionType.NoValue);
@@ -49,23 +49,23 @@ namespace GitMC.CLI.Commands
                     return 0;
                 }
                 
-                // var packConfig = ModpackConfig.LoadYAML(directory);
-                // var build  = await Build(packConfig);
-                
                 using (var repo = new Repository(directory)) {
                     // check if we are on master
-                    if (repo.Head.FriendlyName != "master") {
-                        Console.WriteLine("ERROR: Not on working branch, you cannot make a release like this");
+                    var remoteHeadRef = repo.Refs["refs/remotes/origin/HEAD"];
+                    bool isRelease = repo.Head.TrackedBranch?.CanonicalName == remoteHeadRef.TargetIdentifier;
+                    if (isRelease) {
+                        Console.WriteLine("ERROR: currently on the release branch, you cannot make a release like this");
                         return 1;
                     }
                     
                     // check for changed files
-                    if ((repo.RetrieveStatus()).Count() != 0) {
-                        Console.WriteLine("ERROR: commit, stash or discard changes:");
-                        foreach (var f in repo.RetrieveStatus())
-                        {
-                            Console.WriteLine($"> { f.FilePath }");
-                        }
+                    if ((repo.RetrieveStatus()).Where(f => f.State != LibGit2Sharp.FileStatus.Ignored ).Count() != 0) {
+                        Console.WriteLine("ERROR: commit, stash, ignore or discard changes:");
+                        // foreach (var f in repo.RetrieveStatus())
+                        // {
+                        //     Console.WriteLine($"> { f.FilePath }");
+                        // }
+                        Console.WriteLine(repo.RetrieveStatus().ToPrettyJson());
                         return 1;
                     }
                     
@@ -140,6 +140,24 @@ namespace GitMC.CLI.Commands
                         return 1;
                     }
                     
+                    Commit masterCommit = repo.Head.Tip;
+                    var workingBranch = repo.Head;
+                    // Branch releaseBranch = repo.Branches["release"];
+                    var releaseBranch = repo.Branches.Where(b => b.TrackedBranch?.CanonicalName == remoteHeadRef.TargetIdentifier).FirstOrDefault() ?? repo.Branches["release"];
+                    if(releaseBranch == null) {
+                        Console.WriteLine($"ERROR: cannot find a release branch");
+                        return 1;
+                    }
+                    
+                    // check if branch releases exists
+                    if(releaseBranch == null) {
+                        Console.WriteLine("creating branch 'release'");
+                        // create release branch at current commit
+                        releaseBranch = repo.CreateBranch("release", masterCommit);
+                        //TODO: set-upstream origin/release
+                        //TODO: set origin/HEAD -> origin/release
+                    }
+                    
                     Console.WriteLine($"selected version { buildVersion }");
                     
                     var packConfig = ModpackConfig.LoadYAML(directory);
@@ -148,22 +166,10 @@ namespace GitMC.CLI.Commands
                     //set pack version
                     build.PackVersion = buildVersion; // version?.ToString() ?? versionString;
                     
-                    
-                    Commit masterCommit = repo.Head.Tip;
-                    Branch releaseBranch = repo.Branches["release"];
-                    
-                    // check if branch releases exists
-                    if(releaseBranch == null) {
-                        Console.WriteLine("creating branch 'release'");
-                        // create release branch at current commit
-                        releaseBranch = repo.CreateBranch("release", masterCommit);
-                        //TODO: set-upstream origin/release
-                    }
-                    
                     // checkout release
                     LibGit2Sharp.Commands.Checkout(repo, releaseBranch, new CheckoutOptions{ CheckoutModifiers = CheckoutModifiers.Force });
                     // reset to tip of release
-                    repo.Reset(ResetMode.Hard, releaseBranch.Tip);
+                    repo.Reset(ResetMode.Mixed, releaseBranch.Tip);
                     
                     using( var config = Configuration.BuildFrom(".") ) {
                         // Create the committer's signature and commit
@@ -174,7 +180,7 @@ namespace GitMC.CLI.Commands
                         
                         // merge master into release
                         var mergeResult = repo.Merge(masterCommit, user, new MergeOptions{ FastForwardStrategy = FastForwardStrategy.Default, FileConflictStrategy = CheckoutFileConflictStrategy.Theirs });
-                        
+                        Console.WriteLine(mergeResult.Status.ToPrettyJson());
                         // rewrite commit message
                         if(mergeResult.Status == MergeStatus.NonFastForward && mergeResult.Commit != null) {
                             // remove old backup refs
@@ -212,7 +218,7 @@ namespace GitMC.CLI.Commands
                         Console.WriteLine($"Don't forget to push branch '{ releaseBranch.FriendlyName }' and tag '{ tag.FriendlyName }'");
                     }
                     
-                    LibGit2Sharp.Commands.Checkout(repo, "master");//, new CheckoutOptions{ CheckoutModifiers = CheckoutModifiers.Force });
+                    LibGit2Sharp.Commands.Checkout(repo, workingBranch);//, new CheckoutOptions{ CheckoutModifiers = CheckoutModifiers.Force });
                 }
                 return 0;
             });
