@@ -50,11 +50,12 @@ namespace GitMC.CLI.Commands
                 }
                 
                 using (var repo = new Repository(directory)) {
-                    // check if we are on master
+                    // check if we are on the default branch
+                    //TODO: add a flag for ignoring this
                     var remoteHeadRef = repo.Refs["refs/remotes/origin/HEAD"];
-                    bool isRelease = repo.Head.TrackedBranch?.CanonicalName == remoteHeadRef.TargetIdentifier;
-                    if (isRelease) {
-                        Console.WriteLine("ERROR: currently on the release branch, you cannot make a release like this");
+                    bool isDefaultBranch = repo.Head.TrackedBranch?.CanonicalName == remoteHeadRef.TargetIdentifier;
+                    if (!isDefaultBranch) {
+                        Console.WriteLine("WARNING: currently on the default branch, do you really want to make a release?");
                         return 1;
                     }
                     
@@ -141,35 +142,15 @@ namespace GitMC.CLI.Commands
                     }
                     
                     Commit masterCommit = repo.Head.Tip;
-                    var workingBranch = repo.Head;
-                    // Branch releaseBranch = repo.Branches["release"];
-                    var releaseBranch = repo.Branches.Where(b => b.TrackedBranch?.CanonicalName == remoteHeadRef.TargetIdentifier).FirstOrDefault() ?? repo.Branches["release"];
-                    if(releaseBranch == null) {
-                        Console.WriteLine($"ERROR: cannot find a release branch");
-                        return 1;
-                    }
-                    
-                    // check if branch releases exists
-                    if(releaseBranch == null) {
-                        Console.WriteLine("creating branch 'release'");
-                        // create release branch at current commit
-                        releaseBranch = repo.CreateBranch("release", masterCommit);
-                        //TODO: set-upstream origin/release
-                        //TODO: set origin/HEAD -> origin/release
-                    }
                     
                     Console.WriteLine($"selected version { buildVersion }");
                     
+                    //TODO: make build step optiona with --build
                     var packConfig = ModpackConfig.LoadYAML(directory);
                     var build  = await Build(packConfig);
                     
                     //set pack version
                     build.PackVersion = buildVersion; // version?.ToString() ?? versionString;
-                    
-                    // checkout release
-                    LibGit2Sharp.Commands.Checkout(repo, releaseBranch, new CheckoutOptions{ CheckoutModifiers = CheckoutModifiers.Force });
-                    // reset to tip of release
-                    repo.Reset(ResetMode.Mixed, releaseBranch.Tip);
                     
                     using( var config = Configuration.BuildFrom(".") ) {
                         // Create the committer's signature and commit
@@ -177,19 +158,6 @@ namespace GitMC.CLI.Commands
                         var name = config.GetValueOrDefault<string>("user.name", "nobody");
                         var email = config.GetValueOrDefault<string>("user.email", "@example.com");
                         Signature user = new Signature(name, email, DateTime.Now);
-                        
-                        // merge master into release
-                        var mergeResult = repo.Merge(masterCommit, user, new MergeOptions{ FastForwardStrategy = FastForwardStrategy.Default, FileConflictStrategy = CheckoutFileConflictStrategy.Theirs });
-                        Console.WriteLine(mergeResult.Status.ToPrettyJson());
-                        // rewrite commit message
-                        if(mergeResult.Status == MergeStatus.NonFastForward && mergeResult.Commit != null) {
-                            // remove old backup refs
-                            repo.Refs.Remove($"refs/original/heads/{ releaseBranch.FriendlyName }");
-                            repo.Refs.RewriteHistory (new RewriteHistoryOptions {
-                                CommitHeaderRewriter = c =>
-                                    CommitRewriteInfo.From (c, $"preparing { build.PackVersion } \n{ masterCommit.Message }"),
-                            }, mergeResult.Commit);
-                        }
                         
                         build.SaveJSON(directory, pretty: true);
                         
@@ -211,14 +179,12 @@ namespace GitMC.CLI.Commands
                             var remote = r.Name;
                             var retTag = await ThreadUtil.RunProcessAsync("git", $"push { remote } { tagName }");
                             Console.WriteLine($"git push { remote } { tagName } finished with exit code { retTag }");
-                            var retBranch = await ThreadUtil.RunProcessAsync("git", $"push { remote } { releaseBranch.FriendlyName }");
-                            Console.WriteLine($"git push { remote } { releaseBranch.FriendlyName } finished with exit code { retBranch }");
+                            var retBranch = await ThreadUtil.RunProcessAsync("git", $"push { remote } { repo.Head.FriendlyName }");
+                            Console.WriteLine($"git push { remote } { repo.Head.FriendlyName } finished with exit code { retBranch }");
                         }
                     } else {
-                        Console.WriteLine($"Don't forget to push branch '{ releaseBranch.FriendlyName }' and tag '{ tag.FriendlyName }'");
+                        Console.WriteLine($"Don't forget to push branch '{ repo.Head.FriendlyName }' and tag '{ tag.FriendlyName }'");
                     }
-                    
-                    LibGit2Sharp.Commands.Checkout(repo, workingBranch);//, new CheckoutOptions{ CheckoutModifiers = CheckoutModifiers.Force });
                 }
                 return 0;
             });
