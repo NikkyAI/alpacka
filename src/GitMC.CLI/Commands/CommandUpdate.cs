@@ -33,76 +33,131 @@ namespace GitMC.CLI.Commands
                     ? Path.GetFullPath(optDirectory.Value())
                     :*/ Directory.GetCurrentDirectory();
                 
-                if(optList.HasValue() || argVersion.Value == null) {
+                if(optList.HasValue()/* || argVersion.Value == null*/) {
                     return ListVersions(directory);
                 }
                 
-                // TODO: switch branches and stuff
-                
-                return await CommandUpdate.Execute(directory);
-                // // read packbuild.json
-                
-                // ModpackVersion build = await GetBuild(directory);
-                
-                // //TODO: download mods
-                
-                // var name = build.Name; //TODO: clean away spaces and special characters
-                // var prettyName = build.Name;
-                // var mcVersion = build.MinecraftVersion;
-                // var forgeVersion = build.ForgeVersion;
-                
-                // var forgeData = await ForgeVersionData.Download();
-                // ForgeVersion forge = forgeData[forgeVersion];
-                // var info = GitMCInfo.Load(directory);
-                
-                // if(info.Type == InstallType.Server)
-                // {
-                //     var forgeFile = await ForgeInstaller.InstallServer(directory, build, forge);
-                    
-                //     Console.WriteLine($"start forge server by executing {forgeFile}");
-                    
-                //     var modsDir = Path.Combine(directory, Constants.MC_MODS_DIR);
-                    
-                //     await DownloadMods(build.Mods, modsDir);
-                    
-                //     // TODO: mabye later use ModpackDownloader
-                //     // List<DownloadedMod> downloaded;
-                //     // using (var modsCache = new FileCache(Path.Combine(Constants.CachePath, "mods")))
-                //     // using (var downloader = new ModpackDownloader(modsCache)
-                //     //         .WithSourceHandler(new ModSourceURL()))
-                //     //     downloaded = await downloader.Run(modpackVersion);
-                        
-                //     // foreach (var downloadedMod in downloaded.Where(d => d.Mod.Side.IsServer()))
-                //     //     File.Copy(downloadedMod.File.Path, Path.Combine(modsDir, downloadedMod.File.FileName));
-                //     return 0;
+                // if(argVersion.Value == null) {
+                //     return ListVersions(directory);
                 // }
                 
-                // return 0;
+                // TODO: switch branches and stuff
+                using (var repo = new Repository(directory))
+                {
+                    // check for changed files
+                    if ((repo.RetrieveStatus()).Count() != 0) {
+                        Console.WriteLine("ERROR: commit, stash or discard changes:");
+                        foreach (var f in repo.RetrieveStatus())
+                        {
+                            Console.WriteLine($"> { f.FilePath }");
+                        }
+                        return 1;
+                    }
+                    
+                    bool isRelease = repo.Head.FriendlyName == "release";
+                    
+                    if(argVersion.Value == null) {
+                        if(isRelease) {
+                            //TODO: get latest release
+                            var tagVersion = repo.Tags.Select(t => {
+                                var vString = t.FriendlyName;
+                                System.Version v = null;
+                                if (!string.IsNullOrEmpty(vString) && vString[0] == 'v')
+                                    System.Version.TryParse(vString.Substring(1), out v);
+                                return new { Tag = t, Version = v };
+                            }).OrderByDescending( a => a.Version).FirstOrDefault();
+                            
+                            if(tagVersion != null) {
+                                var commit = (Commit)tagVersion.Tag.Target;
+                                Console.WriteLine($"Version: {tagVersion.Version} Commit: {commit.Message}");
+                                repo.Reset(ResetMode.Hard, commit);
+                            } else {
+                                Console.WriteLine($"ERROR: Cannot find any release");
+                                return 1;
+                            }
+                        } else {
+                            // TODO: pull.. auth etc
+                            string logMessage = "";
+                            foreach (Remote remote in repo.Network.Remotes)
+                            {
+                                var refSpecs = remote.FetchRefSpecs.Select(x => x.Specification);
+                                LibGit2Sharp.Commands.Fetch(repo, remote.Name, refSpecs, null, logMessage);
+                            }
+                            var remoteBranch = repo.Branches[$"origin/{repo.Head.FriendlyName}"];
+                            foreach(var c in remoteBranch.Commits) {
+                                Console.WriteLine($"{c.Id} {c.Message}");
+                            }
+                            //reset to tip of remote
+                            repo.Reset(ResetMode.Hard, remoteBranch.Tip);
+                        }
+                    } else {
+                        System.Version version = null;
+                        
+                        if(System.Version.TryParse(argVersion.Value, out version)) {
+                            // switch to release tag
+                            Console.WriteLine($"switching to branch 'release'");
+                            LibGit2Sharp.Commands.Checkout(repo, "release", new CheckoutOptions{ CheckoutModifiers = CheckoutModifiers.Force });
+                            //TODO: get Tag
+                            
+                            Console.WriteLine($"finding tag '{argVersion.Value}'");
+                            var tagVersion = repo.Tags.Select(t => {
+                                var vString = t.FriendlyName;
+                                System.Version v = null;
+                                if (!string.IsNullOrEmpty(vString) && vString[0] == 'v')
+                                    System.Version.TryParse(vString.Substring(1), out v);
+                                return new { Tag = t, Version = v };
+                            }).OrderByDescending( a => a.Version).Where(a => a.Version == version).FirstOrDefault();
+                            
+                            if(tagVersion != null) {
+                                var commit = (Commit)tagVersion.Tag.Target;
+                                Console.WriteLine($"Version: {tagVersion.Version} Commit: {commit.Message}");
+                                repo.Reset(ResetMode.Hard, commit);
+                            } else {
+                                Console.WriteLine($"ERROR: Cannot find tag for version '{version}'");
+                                return 1;
+                            }
+                            //TODO: reset to commit
+                            
+                        } else {
+                            // switch to branch
+                            Console.WriteLine($"switching to branch '{argVersion.Value}'");
+                            LibGit2Sharp.Commands.Checkout(repo, argVersion.Value, new CheckoutOptions{ CheckoutModifiers = CheckoutModifiers.Force });
+                        }
+                    }
+                }
+                
+                return await CommandUpdate.Execute(directory);
             });
         }
         
         public static int ListVersions(string directory, bool withLocal = false) {
             using (var repo = new Repository(directory))
             {
+                var allTagVersions = repo.Tags.Select(t => {
+                    var vString = t.FriendlyName;
+                    System.Version v = null;
+                    if (!string.IsNullOrEmpty(vString) && vString[0] == 'v')
+                        System.Version.TryParse(vString.Substring(1), out v);
+                    return new { Tag = t, Version = v };
+                }).OrderByDescending( a => a.Version);
+                
+                
                 var tip = repo.Head.Tip;
                 Console.WriteLine($"Tip: { repo.Head.FriendlyName }{ tip }");
                 Console.WriteLine("Branches:");
-                foreach(Branch b in repo.Branches.Where(b => b.IsRemote || b.IsTracking))
+                foreach(Branch b in repo.Branches.Where(b => !b.IsRemote))
                 {
+                    if(b.FriendlyName == "release") continue;
                     var prefix = b.IsCurrentRepositoryHead ? "*" : " ";
-                    var remote = b.IsRemote ? "remote" : "";
-                    var tracking = b.IsTracking ? "tracking" : "";
-                    Console.WriteLine($"{ prefix }{ b.FriendlyName } { remote }{ tracking }");
+                    Console.WriteLine($"{ prefix }{ b.FriendlyName }");
                     // Console.WriteLine(string.Format("{0}{1}", b.IsCurrentRepositoryHead ? "*" : " ", b.FriendlyName));
                 }
-                Console.WriteLine("Tags:");
-                foreach (Tag t in repo.Tags.Reverse())
+                Console.WriteLine("Releases:");
+                foreach (var t in allTagVersions)
                 {
-                    var target = (Commit) t.Target;
-                    
+                    var target = (Commit) t.Tag.Target;
                     var prefix = target == tip ? "*" : " ";
-                    var name = t.FriendlyName[0] == 'v' ? t.FriendlyName.Substring(1) : t.FriendlyName;
-                    Console.WriteLine($"{ prefix }{ name }");
+                    Console.WriteLine($"{ prefix }{ t.Version }");
                 }
             }
             
