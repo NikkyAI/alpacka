@@ -11,6 +11,7 @@ using GitMC.Lib.Mods;
 using GitMC.Lib.Net;
 using GitMC.Lib.Instances;
 using LibGit2Sharp;
+using Newtonsoft.Json.Serialization;
 
 namespace GitMC.CLI.Commands
 {
@@ -46,8 +47,8 @@ namespace GitMC.CLI.Commands
                 using (var repo = new Repository(directory))
                 {
                     // check for changed files
-                    if ((repo.RetrieveStatus()).Count() != 0) {
-                        Console.WriteLine("ERROR: commit, stash or discard changes:");
+                    if ((repo.RetrieveStatus()).Where(f => f.State != LibGit2Sharp.FileStatus.Ignored ).Count() != 0) {
+                        Console.WriteLine("WARNING: commit, stash, ignore or discard changes:");
                         foreach (var f in repo.RetrieveStatus())
                         {
                             Console.WriteLine($"> { f.FilePath }");
@@ -55,8 +56,11 @@ namespace GitMC.CLI.Commands
                         return 1;
                     }
                     
-                    bool isRelease = repo.Head.FriendlyName == "release";
+                    //TODO: check against origin/HEAD ref
                     
+                    var remoteHeadRef = repo.Refs["refs/remotes/origin/HEAD"];
+                    bool isRelease = repo.Head.TrackedBranch?.CanonicalName == remoteHeadRef.TargetIdentifier;
+                    Console.WriteLine($"is release: {isRelease}");
                     if(argVersion.Value == null) {
                         if(isRelease) {
                             //TODO: get latest release
@@ -97,9 +101,9 @@ namespace GitMC.CLI.Commands
                         if(System.Version.TryParse(argVersion.Value, out version)) {
                             // switch to release tag
                             Console.WriteLine($"switching to branch 'release'");
-                            LibGit2Sharp.Commands.Checkout(repo, "release", new CheckoutOptions{ CheckoutModifiers = CheckoutModifiers.Force });
-                            //TODO: get Tag
+                            LibGit2Sharp.Commands.Checkout(repo, remoteHeadRef.TargetIdentifier, new CheckoutOptions{ CheckoutModifiers = CheckoutModifiers.Force });
                             
+                            //get Tag
                             Console.WriteLine($"finding tag '{argVersion.Value}'");
                             var tagVersion = repo.Tags.Select(t => {
                                 var vString = t.FriendlyName;
@@ -112,12 +116,13 @@ namespace GitMC.CLI.Commands
                             if(tagVersion != null) {
                                 var commit = (Commit)tagVersion.Tag.Target;
                                 Console.WriteLine($"Version: {tagVersion.Version} Commit: {commit.Message}");
+                                //reset to commit
                                 repo.Reset(ResetMode.Hard, commit);
                             } else {
                                 Console.WriteLine($"ERROR: Cannot find tag for version '{version}'");
                                 return 1;
                             }
-                            //TODO: reset to commit
+                            
                             
                         } else {
                             // switch to branch
@@ -131,7 +136,7 @@ namespace GitMC.CLI.Commands
             });
         }
         
-        public static int ListVersions(string directory, bool withLocal = false) {
+        public static int ListVersions(string directory) {
             using (var repo = new Repository(directory))
             {
                 var allTagVersions = repo.Tags.Select(t => {
@@ -146,12 +151,12 @@ namespace GitMC.CLI.Commands
                 var tip = repo.Head.Tip;
                 Console.WriteLine($"Tip: { repo.Head.FriendlyName }{ tip }");
                 Console.WriteLine("Branches:");
-                foreach(Branch b in repo.Branches.Where(b => !b.IsRemote))
+                var remoteHeadRef = repo.Refs["refs/remotes/origin/HEAD"];
+                bool isRelease = repo.Head.TrackedBranch?.CanonicalName == remoteHeadRef.TargetIdentifier;
+                foreach(Branch b in repo.Branches.Where(b => !b.IsRemote && b.TrackedBranch?.CanonicalName != remoteHeadRef.TargetIdentifier))
                 {
-                    if(b.FriendlyName == "release") continue;
                     var prefix = b.IsCurrentRepositoryHead ? "*" : " ";
-                    Console.WriteLine($"{ prefix }{ b.FriendlyName }");
-                    // Console.WriteLine(string.Format("{0}{1}", b.IsCurrentRepositoryHead ? "*" : " ", b.FriendlyName));
+                    Console.WriteLine($"{ prefix } { b.FriendlyName } -> { b.TrackedBranch?.FriendlyName ?? "none" }");
                 }
                 Console.WriteLine("Releases:");
                 foreach (var t in allTagVersions)
@@ -235,8 +240,10 @@ namespace GitMC.CLI.Commands
         public static async Task<ModpackBuild> GetBuild(string directory)
         {
             var packBuildPath = Path.Combine(directory, Constants.PACK_BUILD_FILE);
+            Console.WriteLine($"packbuildpath: {packBuildPath}");
+            var settings = new JsonSerializerSettings{ ContractResolver = new CamelCasePropertyNamesContractResolver() };
             return File.Exists(packBuildPath)
-                ? JsonConvert.DeserializeObject<ModpackBuild>(File.ReadAllText(packBuildPath))
+                ? JsonConvert.DeserializeObject<ModpackBuild>(File.ReadAllText(packBuildPath), settings)
                 : await CommandBuild.Build(ModpackConfig.LoadYAML(directory));
         }
         
