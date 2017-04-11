@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -82,7 +83,7 @@ namespace GitMC.CLI.Commands
                     
                     var remoteHeadRef = repo.Refs["refs/remotes/origin/HEAD"];
                     bool isDefaultBranch = repo.Head.TrackedBranch?.CanonicalName == remoteHeadRef.TargetIdentifier;
-                    Console.WriteLine($"is default branch: {isDefaultBranch}");
+                    Debug.WriteLine($"is default branch: {isDefaultBranch}");
                     if(argVersion.Value == null) {
                         
                         if(currentTag != null) {
@@ -97,7 +98,7 @@ namespace GitMC.CLI.Commands
                             
                             if(tagVersion != null) {
                                 var commit = (Commit)tagVersion.Tag.Target;
-                                Console.WriteLine($"Version: {tagVersion.Version} Commit: {commit.Message}");
+                                Debug.WriteLine($"Version: {tagVersion.Version} Commit: {commit.Message}");
                                 // checkout tag
                                 LibGit2Sharp.Commands.Checkout(repo, commit/*, new CheckoutOptions{ CheckoutModifiers = CheckoutModifiers.Force }*/);
                             } else {
@@ -175,7 +176,7 @@ namespace GitMC.CLI.Commands
                 
                 
                 var tip = repo.Head.Tip;
-                Console.WriteLine($"Tip: { repo.Head.FriendlyName } { tip.MessageShort } { tip }");
+                Debug.WriteLine($"Tip: { repo.Head.FriendlyName } { tip.MessageShort } { tip }");
                 Console.WriteLine("Branches:");
                 foreach(Branch b in repo.Branches.Where(b => !b.IsRemote))
                 {

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Diagnostics; 
 using System.Threading.Tasks;
 using Microsoft.Extensions.CommandLineUtils;
 using LibGit2Sharp;
@@ -89,14 +90,14 @@ namespace GitMC.CLI.Commands
                     // set default 
                     if (lastVersion == null) lastVersion = new System.Version(0, 0, 0);
                     
-                    Console.WriteLine($"last tag is version { lastVersion.ToString() }");
+                    Debug.WriteLine($"last tag is version { lastVersion.ToString() }");
                     
                     var versionString = argVersion.Value;
                     
                     System.Version version = null;
                     if(!string.IsNullOrEmpty(versionString)) {
                         if (!System.Version.TryParse(versionString, out version)) {
-                            Console.WriteLine($"failed to parse '{ versionString }' as version");
+                            Debug.WriteLine($"failed to parse '{ versionString }' as version");
                             return 1;
                         }
                     } else {
@@ -221,12 +222,12 @@ namespace GitMC.CLI.Commands
                     //TODO: get username and password or make key based auth work
                     if (!optNoPush.HasValue()) {
                         foreach(var r in repo.Network.Remotes) {
-                            Console.WriteLine($"r.Name");
+                            Debug.WriteLine($"Remote: {r.Name}");
                             var remote = r.Name;
                             var retTag = await ThreadUtil.RunProcessAsync("git", $"push { remote } { tagName }");
-                            Console.WriteLine($"git push { remote } { tagName } finished with exit code { retTag }");
+                            Debug.WriteLine($"git push { remote } { tagName } finished with exit code { retTag }");
                             var retBranch = await ThreadUtil.RunProcessAsync("git", $"push { remote } { repo.Head.FriendlyName }");
-                            Console.WriteLine($"git push { remote } { repo.Head.FriendlyName } finished with exit code { retBranch }");
+                            Debug.WriteLine($"git push { remote } { repo.Head.FriendlyName } finished with exit code { retBranch }");
                         }
                     } else {
                         Console.WriteLine($"Don't forget to push branch '{ repo.Head.FriendlyName }' and tag '{ tag.FriendlyName }'");
