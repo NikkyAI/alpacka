@@ -28,9 +28,15 @@ namespace GitMC.CLI.Commands
             var optIncrease = Option("-i | --increase",
                 "Increase the pack version [patch, minor, major] Cannot be used with [version]", CommandOptionType.SingleValue);
             
-            var optPush = Option("-p | --push",
-                "automatically push the release. Pushes 'release' branch and tag to 'origin', also sets upstream for 'release' branch. Does NOT push other tags", CommandOptionType.NoValue);
-                
+            var optNoPush = Option("--no-push",
+                "disable automatically pushing the release. Pushes branch and tag to 'origin'. Does NOT push other tags", CommandOptionType.NoValue);
+            
+            var optNoCommit = Option("--no-commit",
+                "Do not create a release commit", CommandOptionType.NoValue);
+            
+            var optBuild = Option("-b | --build",
+                "runs 'build' and generates the packbuild.json, needs to create a extra commit", CommandOptionType.NoValue);
+            
             HelpOption("-? | -h | --help");
             
             OnExecute(async () => {
@@ -55,7 +61,7 @@ namespace GitMC.CLI.Commands
                     var remoteHeadRef = repo.Refs["refs/remotes/origin/HEAD"];
                     bool isDefaultBranch = repo.Head.TrackedBranch?.CanonicalName == remoteHeadRef.TargetIdentifier;
                     if (!isDefaultBranch) {
-                        Console.WriteLine("WARNING: currently on the default branch, do you really want to make a release?");
+                        Console.WriteLine("WARNING: currently not on the default branch, do you really want to make a release?");
                         return 1;
                     }
                     
@@ -133,6 +139,27 @@ namespace GitMC.CLI.Commands
                         return 1;
                     }
                     
+                    var diffMajor = version.Major - lastVersion.Major;
+                    var diffMinor = version.Minor - lastVersion.Minor;
+                    var diffPatch = version.Build - lastVersion.Build;
+                    if(diffMajor > 1 || diffMinor > 1 || diffPatch > 1) {
+                        if(diffMajor > 1) Console.WriteLine($"WARNING: version difference of { diffMajor } in Major");
+                        if(diffMinor > 1) Console.WriteLine($"WARNING: version difference of { diffMinor } in Minor");
+                        if(diffPatch > 1) Console.WriteLine($"WARNING: version difference of { diffPatch } in Patch");
+                        return 1;
+                    }
+                    
+                    if (diffMajor == 1 && (diffMinor > 0 || diffPatch > 0)) {
+                        if(diffMinor > 0) Console.WriteLine($"WARNING: version difference of { diffMinor } in Minor while also increasing version of Major");
+                        if(diffPatch > 0) Console.WriteLine($"WARNING: version difference of { diffPatch } in Patch while also increasing version of Major");
+                        return 1;
+                    }
+                    
+                    if (diffMinor == 1 && diffPatch > 0) {
+                        if(diffPatch > 0) Console.WriteLine($"WARNING: version difference of { diffPatch } in Patch while also increasing version of Minor");
+                        return 1;
+                    }
+                    
                     var buildVersion = version.ToString();
                     var tagName = $"v{buildVersion}";
                     
@@ -141,31 +168,50 @@ namespace GitMC.CLI.Commands
                         return 1;
                     }
                     
-                    Commit masterCommit = repo.Head.Tip;
-                    
                     Console.WriteLine($"selected version { buildVersion }");
-                    
-                    //TODO: make build step optiona with --build
-                    var packConfig = ModpackConfig.LoadYAML(directory);
-                    var build  = await Build(packConfig);
-                    
-                    //set pack version
-                    build.PackVersion = buildVersion; // version?.ToString() ?? versionString;
-                    
                     using( var config = Configuration.BuildFrom(".") ) {
-                        // Create the committer's signature and commit
-                        //TODO: ask for and set git config if not set
-                        var name = config.GetValueOrDefault<string>("user.name", "nobody");
-                        var email = config.GetValueOrDefault<string>("user.email", "@example.com");
-                        Signature user = new Signature(name, email, DateTime.Now);
-                        
-                        build.SaveJSON(directory, pretty: true);
-                        
-                        // Stage the build file
-                        LibGit2Sharp.Commands.Stage(repo, Constants.PACK_BUILD_FILE, new StageOptions{IncludeIgnored = true});
-                        
-                        // Commit to the repository
-                        Commit commit = repo.Commit($"Release { build.PackVersion }", user, user);
+                        if(!optNoCommit.HasValue()) {
+                            if (optBuild.HasValue()) {
+                                var packConfig = ModpackConfig.LoadYAML(directory);
+                                var build  = await Build(packConfig);
+                                
+                                build.SaveJSON(directory, pretty: true);
+                                
+                                //set pack version
+                                build.PackVersion = buildVersion;
+                                
+                                build.SaveJSON(directory, pretty: true);
+                                
+                                // Stage the build file
+                                LibGit2Sharp.Commands.Stage(repo, Constants.PACK_BUILD_FILE, new StageOptions{IncludeIgnored = true});
+                            } else {
+                                // change only the pack version
+                                
+                                // read json (or build from yaml if no json is found)
+                                var build = CommandUpdate.GetBuild(directory).Result;
+                                    
+                                //set pack version
+                                build.PackVersion = buildVersion;
+                                
+                                build.SaveJSON(directory, pretty: true);
+                                
+                                // Stage the build file
+                                LibGit2Sharp.Commands.Stage(repo, Constants.PACK_BUILD_FILE, new StageOptions{IncludeIgnored = true});
+                            }
+                            // Create the committer's signature and commit
+                            //TODO: ask for and set git config if not set
+                            var name = config.GetValueOrDefault<string>("user.name", "nobody");
+                            var email = config.GetValueOrDefault<string>("user.email", "@example.com");
+                            Signature user = new Signature(name, email, DateTime.Now);
+                            
+                            // Commit to the repository
+                            Commit commit = repo.Commit($"Release { buildVersion }", user, user);
+                        } else {
+                            if (optBuild.HasValue()) {
+                                Console.WriteLine($"ERROR: cannot use --no-comit and --build at the same time. Duh.");
+                                return 1; // illegal argument configuration
+                            }
+                        }
                     }
                     
                     // create tag
@@ -173,7 +219,7 @@ namespace GitMC.CLI.Commands
                     
                     // push to remote
                     //TODO: get username and password or make key based auth work
-                    if (optPush.HasValue()) {
+                    if (!optNoPush.HasValue()) {
                         foreach(var r in repo.Network.Remotes) {
                             Console.WriteLine($"r.Name");
                             var remote = r.Name;
