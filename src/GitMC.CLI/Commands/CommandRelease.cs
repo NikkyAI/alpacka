@@ -66,13 +66,13 @@ namespace GitMC.CLI.Commands
                     }
                     
                     // check for changed files
-                    if ((repo.RetrieveStatus()).Where(f => f.State != LibGit2Sharp.FileStatus.Ignored ).Count() != 0) {
+                    var changedFiles = repo.RetrieveStatus().Where(f => f.State != LibGit2Sharp.FileStatus.Ignored );
+                    if (changedFiles.Count() != 0) {
                         Console.WriteLine("ERROR: commit, stash, ignore or discard changes:");
-                        // foreach (var f in repo.RetrieveStatus())
-                        // {
-                        //     Console.WriteLine($"> { f.FilePath }");
-                        // }
-                        Console.WriteLine(repo.RetrieveStatus().ToPrettyJson());
+                        foreach (var f in changedFiles)
+                        {
+                            Console.WriteLine($"[ { f.State } ] > { f.FilePath }");
+                        }
                         return 1;
                     }
                     

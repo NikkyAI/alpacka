@@ -46,11 +46,12 @@ namespace GitMC.CLI.Commands
                 using (var repo = new Repository(directory))
                 {
                     // check for changed files
-                    if ((repo.RetrieveStatus()).Where(f => f.State != LibGit2Sharp.FileStatus.Ignored ).Count() != 0) {
+                    var changedFiles = repo.RetrieveStatus().Where(f => f.State != LibGit2Sharp.FileStatus.Ignored );
+                    if (changedFiles.Count() != 0) {
                         Console.WriteLine("WARNING: commit, stash, ignore or discard changes:");
-                        foreach (var f in repo.RetrieveStatus())
+                        foreach (var f in changedFiles)
                         {
-                            Console.WriteLine($"> { f.FilePath }");
+                            Console.WriteLine($"[{ f.State }] > { f.FilePath }");
                         }
                         return 1;
                     }
