@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using GitMC.Lib.Config;
 using GitMC.Lib.Mods;
@@ -9,6 +10,7 @@ namespace GitMC.Lib.Curse
 {
     public class ModSourceCurse : IModSource
     {
+        // TODO: Don't use concurrent dictionary - in general this could likely be done better.
         private static readonly ConcurrentDictionary<EntryMod, AddonFile> _modToAddonFile =
             new ConcurrentDictionary<EntryMod, AddonFile>();
         private static readonly ConcurrentDictionary<EntryMod, DependencyType> _modToDependencyType =
@@ -36,10 +38,10 @@ namespace GitMC.Lib.Curse
                 addon = allProjects.Data.Find(a => string.Equals(a.Name.Trim(), source, StringComparison.OrdinalIgnoreCase));
                 if (addon == null)
                     throw new DownloaderException($"No Project of name '{ source }' found");
-                // Console.WriteLine(_addon.ToPrettyJson());
+                // Debug.WriteLine(_addon.ToPrettyJson());
                 id = addon.Id;
-                Console.WriteLine($"get full addon info for { addon.Name }");
-            } else Console.WriteLine($"get full addon info for id: { source }");
+                Debug.WriteLine($"get full addon info for { addon.Name }");
+            } else Debug.WriteLine($"get full addon info for id: { source }");
             
             addon = await CurseProxy.GetAddon(id);
             mod.Name        = mod.Name ?? addon.Name;
@@ -52,7 +54,7 @@ namespace GitMC.Lib.Curse
             var fileId = await FindFileId(addon, mod, mcVersion, optional);
             if (fileId == -1) {
                 if (optional) {
-                    Console.WriteLine($"no file found for { mod.Source.ToPrettyJson() } This is not a Error");
+                    Debug.WriteLine($"no file found for { mod.Source.ToPrettyJson() } This is not a Error");
                     return null; // We do not throw a error because its not required
                 // We should probably not reach this point ever:
                 } else throw new DownloaderException($"No File of type 'Release' found for { mod.Name } in { mcVersion }");
@@ -73,7 +75,8 @@ namespace GitMC.Lib.Curse
                     addDependency(depMod);
                 } else if (dep.Type == DependencyType.Optional) {
                     var depAddon = await CurseProxy.GetAddon(dep.AddOnId);
-                    Console.WriteLine($"'{ mod.Name }' recommends using '{ depAddon.Name }'"); // TODO: queue and print all at once
+                    // TODO: Make this available in some form in the return value.
+                    Console.WriteLine($"'{ mod.Name }' recommends using '{ depAddon.Name }'");
                 }
             }
             return fileInfo.DownloadURL;
@@ -81,24 +84,23 @@ namespace GitMC.Lib.Curse
         
         public async Task<int> FindFileId(Addon addon, EntryMod mod, string mcVersion, bool optional)
         {
-            // Console.WriteLine($"find file\n mcVersion: { mcVersion }\n name: { addon.Name }"); // TODO: verbose logging
-            // Console.WriteLine($"addon: { addon.ToPrettyJson() }"); // TODO: verbose logging
+            // Debug.WriteLine($"find file\n mcVersion: { mcVersion }\n name: { addon.Name }"); // TODO: verbose logging
+            // Debug.WriteLine($"addon: { addon.ToPrettyJson() }"); // TODO: verbose logging
             if (string.Equals(mod.Version, Release.Recommended.ToString(), StringComparison.OrdinalIgnoreCase)) {
                 
-                try {
-                    var addonFiles = await CurseProxy.GetAddonFiles(addon.Id); // FIXME: This can crash with error 500 for OpenComputers, JEI, RFTools etc
-                    
-                    var sorted = new List<AddonFile>(addonFiles.Files);
-                    sorted.Sort((f1, f2) => f1.FileDate.CompareTo(f2.FileDate) );
-                    var recommendedFile = sorted.Find(file => (file.GameVersion.Contains(mcVersion) &&
-                                                               (file.ReleaseType == ReleaseType.Release)));
-                    if (recommendedFile == null) {
-                        if (optional) return -1;
-                        else throw new DownloaderException($"No File of type 'Release' found for { mod.Name } in { mcVersion }");
-                    }
-                    
-                    return recommendedFile.Id;
-                } catch(Exception e) { Console.WriteLine($"failed for { addon.Name } with { e.Message }"); }
+                // FIXME: This can crash with error 500 for OpenComputers, JEI, RFTools etc
+                var addonFiles = await CurseProxy.GetAddonFiles(addon.Id);
+                
+                var sorted = new List<AddonFile>(addonFiles.Files);
+                sorted.Sort((f1, f2) => f1.FileDate.CompareTo(f2.FileDate) );
+                var recommendedFile = sorted.Find(file => (file.GameVersion.Contains(mcVersion) &&
+                                                           (file.ReleaseType == ReleaseType.Release)));
+                if (recommendedFile == null) {
+                    if (optional) return -1;
+                    else throw new DownloaderException($"No File of type 'Release' found for { mod.Name } in { mcVersion }");
+                }
+                
+                return recommendedFile.Id;
                 
             } else if (string.Equals(mod.Version, Release.Latest.ToString(), StringComparison.OrdinalIgnoreCase)) {
                 
@@ -111,7 +113,7 @@ namespace GitMC.Lib.Curse
                 var sorted = addonFiles.Files;
                 sorted.Sort((f1, f2) => f1.FileDate.CompareTo(f2.FileDate));
                 
-                Console.WriteLine($"mod.Name: { mod.Name } mcVersion: { mcVersion } mod.Version: { mod.Version }");
+                Debug.WriteLine($"mod.Name: { mod.Name } mcVersion: { mcVersion } mod.Version: { mod.Version }");
                 var latestFile = sorted.Find(file => (file.GameVersion.Contains(mcVersion) &&
                                                       file.FileName.Contains(mod.Version)));
                 if (latestFile != null) return latestFile.Id;

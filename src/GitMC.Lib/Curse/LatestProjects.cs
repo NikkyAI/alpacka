@@ -18,7 +18,7 @@ namespace GitMC.Lib.Curse
         public static async Task<ProjectList> Get()
         {
             var cache = Path.Combine(Constants.CachePath, "curse");
-            // Console.WriteLine($"cache: { cache }"); // TODO: verbose
+            // Debug.WriteLine($"cache: { cache }"); // TODO: verbose
             
             var client = new HttpClient(); // TODO: use same HttpClient everywhere
             
@@ -34,8 +34,8 @@ namespace GitMC.Lib.Curse
             }
             
             // download and decompress
-            if (string.IsNullOrEmpty(uncompressedString)) {
-                Console.WriteLine($"downloading complete.json.bz2 and decompressing into { cache }"); // TODO: verbose logging
+            if (uncompressedString == null) {
+                Console.WriteLine($"Downloading Curse complete project database. This could take a while ..."); // TODO: verbose logging
                 using (var stream = await client.GetStreamAsync(COMPLETE_URL))
                 using (var target = new MemoryStream()) {
                     BZip2.Decompress(stream, target, true);

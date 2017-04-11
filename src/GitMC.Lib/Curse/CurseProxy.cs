@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
@@ -85,7 +86,7 @@ namespace GitMC.Lib.Curse
         {
             if (api == null) api = await LazyApi.Value;
             
-            Console.WriteLine("Authenticate");
+            Debug.WriteLine("Authenticate");
             
             string path = Path.Combine(Constants.ConfigPath, "curse_auth.yaml");
             var deserializer = new DeserializerBuilder()
@@ -107,7 +108,7 @@ namespace GitMC.Lib.Curse
                 throw new Exception($"authentication failed with status { authResponse.Status } ");
             api.Authorization = token;
             
-            Console.WriteLine($"auth token received: { token } "); // TODO: log debug
+            Debug.WriteLine($"auth token received: { token } "); // TODO: log debug
             return api;
         }
         
@@ -123,7 +124,7 @@ namespace GitMC.Lib.Curse
         {
            var api = await LazyApi.Value;
             
-            Console.WriteLine($"getAddon { addonId }"); // TODO: verbose logging
+            Debug.WriteLine($"getAddon { addonId }"); // TODO: verbose logging
             var response = await api.Addon(addonId);
             if (!response.ResponseMessage.IsSuccessStatusCode) {
                 if (response.ResponseMessage.StatusCode == HttpStatusCode.Unauthorized) {
@@ -149,7 +150,7 @@ namespace GitMC.Lib.Curse
         {
             var api = await LazyApi.Value;
             
-            Console.WriteLine($"getAddonDescption { addonId }"); // TODO: verbose logging
+            Debug.WriteLine($"getAddonDescption { addonId }"); // TODO: verbose logging
             var response = await api.AddonDescription(addonId);
             if (!response.ResponseMessage.IsSuccessStatusCode) {
                 if (response.ResponseMessage.StatusCode == HttpStatusCode.Unauthorized) {
@@ -175,7 +176,7 @@ namespace GitMC.Lib.Curse
         {
             var api = await LazyApi.Value;
             
-            Console.WriteLine($"getAddonFiles { addonId }"); // TODO: verbose logging
+            Debug.WriteLine($"getAddonFiles { addonId }"); // TODO: verbose logging
             var response = await api.AddonFiles(addonId);
             if (!response.ResponseMessage.IsSuccessStatusCode) {
                 if (response.ResponseMessage.StatusCode == HttpStatusCode.Unauthorized) {
@@ -201,7 +202,7 @@ namespace GitMC.Lib.Curse
         {
             var api = await LazyApi.Value;
             
-            Console.WriteLine($"getAddonFile { addonId } { fileId }"); // TODO: verbose logging
+            Debug.WriteLine($"getAddonFile { addonId } { fileId }"); // TODO: verbose logging
             var response = await api.AddonFile(addonId, fileId);
             if (!response.ResponseMessage.IsSuccessStatusCode) {
                 if (response.ResponseMessage.StatusCode == HttpStatusCode.Unauthorized) {
@@ -227,7 +228,7 @@ namespace GitMC.Lib.Curse
         {
            var api = await LazyApi.Value;
             
-            Console.WriteLine($"getAddonFileChangelog { addonId } { fileId }"); // TODO: verbose logging
+            Debug.WriteLine($"getAddonFileChangelog { addonId } { fileId }"); // TODO: verbose logging
             var response = await api.AddonFileChangelog(addonId, fileId);
             if (!response.ResponseMessage.IsSuccessStatusCode) {
                 if (response.ResponseMessage.StatusCode == HttpStatusCode.Unauthorized) {

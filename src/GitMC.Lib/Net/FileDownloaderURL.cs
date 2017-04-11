@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -70,7 +71,7 @@ namespace GitMC.Lib.Net
                 var md5 = BitConverter.ToString(transform.Hash)
                     .Replace("-", "").ToLowerInvariant();
                 
-                Console.WriteLine($"Downloaded '{ fileName }'");
+                Debug.WriteLine($"Downloaded '{ fileName }'");
                 return new DownloadedFile(url, tempPath, fileName, md5);
                 
             });
