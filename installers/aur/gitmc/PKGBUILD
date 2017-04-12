@@ -1,0 +1,72 @@
+# This is an example PKGBUILD file. Use this as a start to creating your own,
+# and remove these comments. For more information, see 'man PKGBUILD'.
+# NOTE: Please fill out the license field for your package! If it is unknown,
+# then please put 'unknown'.
+
+# Maintainer: Your Name <youremail@domain.com>
+pkgname=gitmc
+pkgver='0.0.1'
+pkgrel=1
+epoch=
+pkgdesc=""
+arch=( 'x86_64' )
+url=""
+license=('GPL')
+groups=()
+depends=('dotnet-cli')
+makedepends=()
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=("$pkgname-git")
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=(
+	"${pkgname}-${pkgver}-any.zip" #TODO: replace with url
+	"gitmc.sh"
+)
+noextract=()
+md5sums=(
+	'SKIP'
+	'SKIP'
+)
+validpgpkeys=()
+
+prepare() {
+	echo "nothing to prepare"
+	# cd "$pkgname-$pkgver"
+	# patch -p1 -i "$srcdir/$pkgname-$pkgver.patch"
+}
+
+build() {
+	echo "nothing to build"
+	# cd "$pkgname-$pkgver"
+	# ./configure --prefix=/usr
+	# make
+}
+
+check() {
+	echo "skipping check"
+}
+
+package() {
+	cd "$srcdir/GitMC.CLI"
+	
+	#"$pkgname-$pkgver"
+	
+	mkdir --parents "$pkgdir/usr/share"
+	cp -r "$srcdir/GitMC.CLI/bin" -T "$pkgdir/usr/share/${pkgname}"
+	
+	cd $srcdir
+	mkdir "$pkgdir/usr/bin"
+	cp "$srcdir/gitmc.sh" -T "$pkgdir/usr/bin/${pkgname}"
+	chmod +x "$pkgdir/usr/bin/${pkgname}"
+	
+	# chmod +x "$pkgdir/usr/share/gitmc/gitmc"
+	# ln -s /usr/share/gitmc/gitmc "$pkgdir/usr/bin/${pkgname}"
+	
+	# make DESTDIR="$pkgdir/" install
+}
