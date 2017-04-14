@@ -37,7 +37,7 @@ namespace GitMC.Lib.Curse
             if (!int.TryParse(source, out id)) {
                 addon = allProjects.Data.Find(a => string.Equals(a.Name.Trim(), source, StringComparison.OrdinalIgnoreCase));
                 if (addon == null)
-                    throw new DownloaderException($"No Project of name '{ source }' found");
+                    throw new Exception($"No Project of name '{ source }' found");
                 // Debug.WriteLine(_addon.ToPrettyJson());
                 id = addon.Id;
                 Debug.WriteLine($"get full addon info for { addon.Name }");
@@ -57,7 +57,7 @@ namespace GitMC.Lib.Curse
                     Debug.WriteLine($"no file found for { mod.Source.ToPrettyJson() } This is not a Error");
                     return null; // We do not throw a error because its not required
                 // We should probably not reach this point ever:
-                } else throw new DownloaderException($"No File of type 'Release' found for { mod.Name } in { mcVersion }");
+                } else throw new Exception($"No File of type 'Release' found for { mod.Name } in { mcVersion }");
             }
             
             var fileInfo = await CurseProxy.GetAddonFile(addon.Id, fileId);
@@ -97,7 +97,7 @@ namespace GitMC.Lib.Curse
                                                            (file.ReleaseType == ReleaseType.Release)));
                 if (recommendedFile == null) {
                     if (optional) return -1;
-                    else throw new DownloaderException($"No File of type 'Release' found for { mod.Name } in { mcVersion }");
+                    else throw new Exception($"No File of type 'Release' found for { mod.Name } in { mcVersion }");
                 }
                 
                 return recommendedFile.Id;

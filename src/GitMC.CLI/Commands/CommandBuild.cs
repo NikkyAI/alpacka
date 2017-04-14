@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.CommandLineUtils;
@@ -24,9 +25,13 @@ namespace GitMC.CLI.Commands
                 var directory = Directory.GetCurrentDirectory();
                 
                 var config = ModpackConfig.LoadYAML(directory);
-                var build  = await Build(config);
-                
-                build.SaveJSON(directory, pretty: true);
+                try {
+                    var build = await Build(config);
+                    build.SaveJSON(directory, pretty: true);
+                } catch (DownloaderException ex) {
+                    Console.WriteLine(ex.Message);
+                    return 1;
+                }
                 
                 return 0;
             });

@@ -7,7 +7,6 @@ using Microsoft.Extensions.CommandLineUtils;
 using Newtonsoft.Json;
 using GitMC.Lib;
 using GitMC.Lib.Config;
-using GitMC.Lib.Mods;
 using GitMC.Lib.Net;
 using GitMC.Lib.Instances;
 
@@ -165,7 +164,7 @@ namespace GitMC.CLI.Commands
                 return Task.WhenAll(mods.Select(async mod => {
                     var file = await downloader.Download(mod.Source);
                     if ((mod.MD5 != null) && (mod.MD5 != file.MD5))
-                        throw new DownloaderException($"MD5: '{ mod.MD5 }' does not match downloaded file's MD5: '{ file.MD5 }' { mod.Name }");
+                        throw new Exception($"MD5: '{ mod.MD5 }' does not match downloaded file's MD5: '{ file.MD5 }' { mod.Name }");
                     File.Copy(file.Path, Path.Combine(modsDir, file.FileName), true);
                 }));
         }

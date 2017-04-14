@@ -7,7 +7,6 @@ links:
   issues: ...
   donations: ...
 
-packVersion: 1.0.0
 minecraftVersion: {{ MC_VERSION }}
 forgeVersion: recommended
 

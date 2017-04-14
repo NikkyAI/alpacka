@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using GitMC.Lib.Config;
 using GitMC.Lib.Net;
@@ -42,52 +43,69 @@ namespace GitMC.Lib.Mods
                     .GetRecent(config.MinecraftVersion, recommendation)
                     .GetFullVersion();
             
-            var processing = config.Mods.Select(mod => mod.Clone()).ToList();
-            var modDict    = new Dictionary<string, ModWrapper>();
+            var processed  = new List<ModWrapper>();
+            var processing = config.Mods.Select(mod => new ModWrapper(mod.Clone(), _sources)).ToList();
+            FireDownloaderExceptionIfErrored(processing, "parsing mod sources");
+            
+            var byName  = new Dictionary<string, ModWrapper>();
+            var byModID = new Dictionary<string, ModWrapper>();
+            
+            bool IsPresent(ModWrapper mod) {
+                var name  = mod.ComparableName;
+                var modID = mod.ModInfo?.ModID;
+                return (string.IsNullOrEmpty(name) || !byName.ContainsKey(name)) &&
+                       ((modID == null) || !byModID.ContainsKey(modID));
+            }
             
             var dependencies = new List<EntryMod>();
             Action<EntryMod> addDependency = (dependency) =>
                 { lock (dependencies) dependencies.Add(dependency); };
             
             while (processing.Count > 0) {
-                var mods = processing.Select(mod => new ModWrapper(mod, _sources)).ToList();
-                
-                // See if any if the mods don't have a mod source handler.
-                var noSources = mods.Where(mod => (mod.SourceHandler == null)).Select(mod => mod.Mod).ToList();
-                if (noSources.Count > 0) throw new NoSourceHandlerException(noSources);
-                
-                await Task.WhenAll(mods.Select(mod => {
+                await Task.WhenAll(processing.Select(mod => {
                     // If mod version is not set, set it to the config default now (recommended or latest).
                     if (mod.Mod.Version == null) mod.Mod.Version =
                         config.Defaults.Version.ToString().ToLowerInvariant();
                     return mod.Resolve(config.MinecraftVersion, addDependency);
                 }));
-                // Discard mods whose download URL has not been set.
-                mods = mods.Where(mod => (mod.DownloadURL != null)).ToList();
+                FireDownloaderExceptionIfErrored(processing, "resolving mods");
                 
-                await Task.WhenAll(mods.Select(mod => mod.Download(_fileDownloader)));
-                await Task.WhenAll(mods.Select(mod => mod.ExtractModInfo()));
+                // Discard mods whose download URL has not been set,
+                // as well as dependencies that have already been downloaded.
+                processing = processing.Where(mod =>
+                        (mod.DownloadURL != null) &&
+                        !(IsPresent(mod) && mod.IsDependency)
+                    ).ToList();
                 
-                // TODO: Handle the possibility of knowing ModID before mod has been downloaded completely.
-                // TODO: If mod already exists in modDict, merge properties such as Side information.
-                foreach (var mod in mods) {
-                    // Unfortunately, not every mod contains an mcmod.info,
-                    // in that case just use the Source as dictionary key.
-                    var key = mod.ModInfo?.ModID ?? mod.Mod.Source;
-                    if (!modDict.ContainsKey(key)) modDict.Add(key, mod);
-                    else Console.WriteLine($"Debug: Downloaded '{ mod }' multiple times");
+                await Task.WhenAll(processing.Select(mod => mod.Download(_fileDownloader)));
+                FireDownloaderExceptionIfErrored(processing, "downloading mods");
+                await Task.WhenAll(processing.Select(mod => mod.ExtractModInfo()));
+                FireDownloaderExceptionIfErrored(processing, "extracting mcmod.info");
+                
+                foreach (var mod in processing) {
+                    // TODO: If mod is already present, merge properties such as Side information.
+                    if (IsPresent(mod) && mod.IsDependency) continue;
+                    
+                    var name  = mod.ComparableName;
+                    var modID = mod.ModInfo?.ModID;
+                    if (!string.IsNullOrEmpty(name)) byName.Add(name, mod);
+                    if (modID != null) byModID.Add(modID, mod);
+                    
+                    processed.Add(mod);
                 }
                 
-                processing   = dependencies;
-                dependencies = new List<EntryMod>();
+                processing = dependencies
+                    .Select(mod => new ModWrapper(mod, _sources, true))
+                    .ToList();
+                dependencies.Clear();
             }
-            
-            foreach (var mod in modDict.Values)
-                mod.Mod.Source = mod.DownloadURL;
             
             return new ModpackBuild(config) {
                 ForgeVersion = forgeVersion,
-                Mods = modDict.Values.Select(mod => mod.Mod).ToList()
+                Mods = processed.Select(mod => {
+                        mod.Mod.Source = mod.DownloadURL;
+                        return mod.Mod;
+                    }).ToList()
             };
         }
         
@@ -99,41 +117,76 @@ namespace GitMC.Lib.Mods
                 )).ContinueWith(task => new List<DownloadedMod>(task.Result));
         
         
+        private void FireDownloaderExceptionIfErrored(List<ModWrapper> mods, string message)
+        {
+            var errored = mods
+                .Where(mod => (mod.Exception != null))
+                .Select(mod => Tuple.Create(mod.Mod, mod.Exception))
+                .ToList();
+            if (errored.Count > 0) throw new DownloaderException(message, errored);
+        }
+        
+        
         private class ModWrapper
         {
             public EntryMod Mod { get; }
+            public bool IsDependency { get; }
             public IModSource SourceHandler { get; }
             
             public string DownloadURL { get; private set; }
             public DownloadedFile DownloadedFile { get; private set; }
             public MCModInfo ModInfo { get; private set; }
             
-            internal ModWrapper(EntryMod mod, List<IModSource> sources)
-                { Mod = mod; SourceHandler = sources.Find(src => src.CanHandle(mod.Source)); }
+            public Exception Exception { get; private set; }
             
-            public async Task Resolve(string mcVersion, Action<EntryMod> addDependency) =>
-                DownloadURL = await SourceHandler.Resolve(Mod, mcVersion, addDependency);
+            private static readonly Regex _modNameComparisonFilter =
+                new Regex(@"\W", RegexOptions.CultureInvariant);
+            public string ComparableName { get {
+                if (Mod.Name == null) return null;
+                var name = _modNameComparisonFilter.Replace(Mod.Name, "").ToLowerInvariant();
+                return (name.Length > 0) ? name : Mod.Name;
+            } }
             
-            public async Task Download(IFileDownloader fileDownloader) =>
-                DownloadedFile = await fileDownloader.Download(DownloadURL);
+            internal ModWrapper(EntryMod mod, List<IModSource> sources, bool isDependency = false) {
+                Mod = mod;
+                IsDependency = isDependency;
+                SourceHandler = sources.Find(src => src.CanHandle(mod.Source));
+                if (SourceHandler == null)
+                    Exception = new Exception("No source handling for '{ mod.Source }'");
+            }
+            
+            public async Task Resolve(string mcVersion, Action<EntryMod> addDependency)
+            {
+                try { DownloadURL = await SourceHandler.Resolve(Mod, mcVersion, addDependency); }
+                catch (Exception ex) { Exception = ex; }
+            }
+            
+            public async Task Download(IFileDownloader fileDownloader)
+            {
+                try { DownloadedFile = await fileDownloader.Download(DownloadURL); }
+                catch (Exception ex) { Exception = ex; }
+            }
             
             public async Task ExtractModInfo()
             {
-                try {
-                    using (var readStream = File.OpenRead(DownloadedFile.Path))
-                        ModInfo = await MCModInfo.Extract(readStream);
-                } catch (Exception ex) {
-                    Console.WriteLine($"Warning: Couldn't load mcmod.info of '{ this }': { ex.Message }");
-                    return;
+                using (var readStream = File.OpenRead(DownloadedFile.Path)) {
+                    try { ModInfo = await MCModInfo.Extract(readStream); }
+                    catch (MCModInfoException ex) {
+                        Console.WriteLine($"INFO: Could not read mcmod.info of mod '{ this }': { ex.Message }");
+                        return;
+                    }
                 }
                 
                 if (string.IsNullOrEmpty(Mod.Name)) Mod.Name = ModInfo.Name;
                 if (string.IsNullOrEmpty(Mod.Description)) Mod.Description = ModInfo.Description;
-                Mod.Version = ModInfo.Version; // TODO: Warn if version doesn't match up?
                 if (string.IsNullOrEmpty(Mod.Links?.Website)) {
                     if (Mod.Links == null) Mod.Links = new EntryLinks();
                     Mod.Links.Website = ModInfo.URL;
                 }
+                
+                // Some mods don't replace their version string correctly.
+                if (ModInfo.Version != "@VERSION@") Mod.Version = ModInfo.Version;
+                // TODO: Warn if version doesn't match up?
             }
             
             public override string ToString() => (Mod.Name ?? Mod.Source);
@@ -151,21 +204,13 @@ namespace GitMC.Lib.Mods
     
     public class DownloaderException : Exception
     {
-        public DownloaderException(string message)
-            : base(message) {  }
-        public DownloaderException(string message, Exception innerException)
-            : base(message, innerException) {  }
-    }
-    
-    public class NoSourceHandlerException : DownloaderException
-    {
-        public NoSourceHandlerException(List<EntryMod> mods)
-            : base(CreateMessage(mods)) {  }
+        public DownloaderException(string hint, List<Tuple<EntryMod, Exception>> exceptions)
+            : base(CreateMessage(hint, exceptions)) {  }
         
-        private static string CreateMessage(List<EntryMod> mods)
-        {
-            return "No source handling for mods:\n  " +
-                string.Join("\n  ", mods.Select(mod => $"Source: '{ mod.Source }'"));
-        }
+        private static string CreateMessage(string hint, List<Tuple<EntryMod, Exception>> exceptions) =>
+            $"{ exceptions.Count } error{ ((exceptions.Count != 1) ? "s" : "") } occured while { hint }:\n" +
+                string.Join("", exceptions.Select(tuple =>
+                    $"\nFor mod { tuple.Item1.Name } (src: '{ tuple.Item1.Source }'):\n" +
+                    $"  { tuple.Item2.ToString().Replace("\n", "  \n") }\n"));
     }
 }
