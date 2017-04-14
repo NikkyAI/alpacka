@@ -30,9 +30,13 @@ function copy_publish() {
     cd $DIR/release/$PROJECT-$TARGET/
     zip -r $zipfile *
     
+    outfolder="$DIR/release/out/"
+    mkdir $outfolder --parent
+    cp "$zipfile" "$outfolder/$PROJECT-$TARGET-$tag.zip"
+    
     github-release upload \
         --user NikkyAi \
-        --repo gitmc \
+        --repo alpacka \
         --tag $tag \
         --label $TARGET \
         --name "$PROJECT-$TARGET-$tag.zip" \
@@ -74,7 +78,7 @@ function release() {
 
     github-release release \
         --user NikkyAi \
-        --repo gitmc \
+        --repo alpacka \
         --tag $tag \
         --pre-release
         
@@ -95,4 +99,4 @@ if [ "$branch" != "master" ]; then
     # exit 1;
 fi
 
-release GitMC.CLI
+release Alpacka.CLI

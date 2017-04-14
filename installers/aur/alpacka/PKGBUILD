@@ -4,7 +4,7 @@
 # then please put 'unknown'.
 
 # Maintainer: Your Name <youremail@domain.com>
-pkgname=gitmc
+pkgname=alpacka
 pkgver='0.0.1'
 pkgrel=1
 epoch=
@@ -26,7 +26,7 @@ install=
 changelog=
 source=(
 	"${pkgname}-${pkgver}-any.zip" #TODO: replace with url
-	"gitmc.sh"
+	"alpacka.sh"
 )
 noextract=()
 md5sums=(
@@ -53,20 +53,20 @@ check() {
 }
 
 package() {
-	cd "$srcdir/GitMC.CLI"
+	cd "$srcdir/Alpacka.CLI"
 	
 	#"$pkgname-$pkgver"
 	
 	mkdir --parents "$pkgdir/usr/share"
-	cp -r "$srcdir/GitMC.CLI/bin" -T "$pkgdir/usr/share/${pkgname}"
+	cp -r "$srcdir/Alpacka.CLI/bin" -T "$pkgdir/usr/share/${pkgname}"
 	
 	cd $srcdir
 	mkdir "$pkgdir/usr/bin"
-	cp "$srcdir/gitmc.sh" -T "$pkgdir/usr/bin/${pkgname}"
+	cp "$srcdir/alpacka.sh" -T "$pkgdir/usr/bin/${pkgname}"
 	chmod +x "$pkgdir/usr/bin/${pkgname}"
 	
-	# chmod +x "$pkgdir/usr/share/gitmc/gitmc"
-	# ln -s /usr/share/gitmc/gitmc "$pkgdir/usr/bin/${pkgname}"
+	# chmod +x "$pkgdir/usr/share/alpacka/alpacka"
+	# ln -s /usr/share/alpacka/alpacka "$pkgdir/usr/bin/${pkgname}"
 	
 	# make DESTDIR="$pkgdir/" install
 }

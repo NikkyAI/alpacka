@@ -4,3 +4,5 @@
 
 # copy shell wrapper into location on path
 # chmod +x
+
+echo "TODO: bash installer"
