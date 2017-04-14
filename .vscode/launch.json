@@ -7,7 +7,7 @@
     "request": "launch",
     "preLaunchTask": "build",
     
-    "program": "${workspaceRoot}/src/GitMC/bin/Debug/netcoreapp1.1/GitMC.dll",
+    "program": "${workspaceRoot}/src/Alpacka.GUI/bin/Debug/netcoreapp1.1/alpacka.dll",
     "args": [ ],
     "cwd": "${workspaceRoot}/run",
     
@@ -22,7 +22,7 @@
     "request": "launch",
     "preLaunchTask": "build",
     
-    "program": "${workspaceRoot}/src/GitMC.CLI/bin/Debug/netcoreapp1.1/GitMC.CLI.dll",
+    "program": "${workspaceRoot}/src/Alpacka.CLI/bin/Debug/netcoreapp1.1/alpacka.dll",
     "args": [ ],
     "cwd": "${workspaceRoot}/run",
     

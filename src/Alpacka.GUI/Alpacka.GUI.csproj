@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  
+  <PropertyGroup>
+    <AssemblyName>alpacka-gui</AssemblyName>
+    <PackageId>Alpacka.GUI</PackageId>
+    <Authors>copygirl;Nikky</Authors>
+    <VersionPrefix>0.0.1</VersionPrefix>
+    <TargetFramework>netcoreapp1.1</TargetFramework>
+    <DebugType>portable</DebugType>
+    <OutputType>Exe</OutputType>
+    <PackageTargetFallback>$(PackageTargetFallback);portable-net451</PackageTargetFallback>
+    <RuntimeFrameworkVersion>1.1.1</RuntimeFrameworkVersion>
+  </PropertyGroup>
+  
+</Project>
