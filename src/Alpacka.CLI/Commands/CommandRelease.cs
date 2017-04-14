@@ -1,27 +1,26 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Diagnostics; 
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Extensions.CommandLineUtils;
 using LibGit2Sharp;
-using GitMC.Lib;
-using GitMC.Lib.Net;
-using GitMC.Lib.Mods;
-using GitMC.Lib.Util;
-using GitMC.Lib.Curse;
-using GitMC.Lib.Config;
+using Alpacka.Lib;
+using Alpacka.Lib.Net;
+using Alpacka.Lib.Mods;
+using Alpacka.Lib.Utility;
+using Alpacka.Lib.Curse;
+using Alpacka.Lib.Config;
 
-namespace GitMC.CLI.Commands
+namespace Alpacka.CLI.Commands
 {
-    // TODO: Just a test command for now?
     public class CommandRelease : CommandLineApplication
     {
         public CommandRelease()
         {
             Name = "release";
             //TODO: description
-            Description = "Releases the current gitMC pack";
+            Description = "Releases the current alpacka pack";
             
             var argVersion = Argument("[version]",
                 "Version that is released, defaults to current. Cannot be used with -i | --increase");
@@ -174,14 +173,18 @@ namespace GitMC.CLI.Commands
                         if(!optNoCommit.HasValue()) {
                             if (optBuild.HasValue()) {
                                 var packConfig = ModpackConfig.LoadYAML(directory);
-                                var build  = await Build(packConfig);
                                 
-                                build.SaveJSON(directory, pretty: true);
-                                
-                                //set pack version
-                                build.PackVersion = buildVersion;
-                                
-                                build.SaveJSON(directory, pretty: true);
+                                //TODO: factor out into method in CommandBuild to reduce duplications
+                                try {
+                                    var build = await CommandBuild.Build(packConfig);
+                                    
+                                    //set pack version
+                                    build.PackVersion = buildVersion;
+                                    build.SaveJSON(directory, pretty: true);
+                                } catch (DownloaderException ex) {
+                                    Console.WriteLine(ex.Message);
+                                    return 1;
+                                }
                                 
                                 // Stage the build file
                                 LibGit2Sharp.Commands.Stage(repo, Constants.PACK_BUILD_FILE, new StageOptions{IncludeIgnored = true});
@@ -242,15 +245,6 @@ namespace GitMC.CLI.Commands
             Major,
             Minor,
             Patch
-        }
-        
-        public static async Task<ModpackBuild> Build(ModpackConfig config)
-        {
-            using (var modsCache = new FileCache(Path.Combine(Constants.CachePath, "mods")))
-            using (var downloader = new ModpackDownloader(modsCache)
-                    .WithSourceHandler(new ModSourceCurse())
-                    .WithSourceHandler(new ModSourceURL()))
-                return await downloader.Resolve(config);
         }
     }
 }
