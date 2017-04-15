@@ -53,8 +53,8 @@ namespace Alpacka.Lib.Mods
             bool IsPresent(ModWrapper mod) {
                 var name  = mod.ComparableName;
                 var modID = mod.ModInfo?.ModID;
-                return (string.IsNullOrEmpty(name) || !byName.ContainsKey(name)) &&
-                       ((modID == null) || !byModID.ContainsKey(modID));
+                return (!string.IsNullOrEmpty(name) && byName.ContainsKey(name)) ||
+                       ((modID != null) && byModID.ContainsKey(modID));
             }
             
             var dependencies = new List<EntryMod>();
