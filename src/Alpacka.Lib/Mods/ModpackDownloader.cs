@@ -47,6 +47,11 @@ namespace Alpacka.Lib.Mods
             var processing = config.Mods.Select(mod => new ModWrapper(mod.Clone(), _sources)).ToList();
             FireDownloaderExceptionIfErrored(processing, "parsing mod sources");
             
+            // Initialize used source handlers.
+            await Task.WhenAll(processing
+                .Select(mod => mod.SourceHandler).Distinct()
+                .Select(handler => handler.Initialize()));
+            
             var byName  = new Dictionary<string, ModWrapper>();
             var byModID = new Dictionary<string, ModWrapper>();
             

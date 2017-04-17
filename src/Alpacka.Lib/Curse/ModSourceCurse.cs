@@ -16,13 +16,18 @@ namespace Alpacka.Lib.Curse
         private static readonly ConcurrentDictionary<EntryMod, DependencyType> _modToDependencyType =
             new ConcurrentDictionary<EntryMod, DependencyType>();
             
-        private Lazy<Task<ProjectList>> AllProjects { get; } = new Lazy<Task<ProjectList>>(LatestProjects.Get);
+        private ProjectList _allProjects;
         
         public bool CanHandle(string source) =>
             (source.StartsWith("curse:") || !source.Contains(":"));
         
-        public async Task<string> Resolve(EntryMod mod, string mcVersion, Action<EntryMod> addDependency) {
-            var allProjects = await AllProjects.Value;
+        public async Task Initialize()
+        {
+            _allProjects = await LatestProjects.Get();
+        }
+        
+        public async Task<string> Resolve(EntryMod mod, string mcVersion, Action<EntryMod> addDependency)
+        {
             var id = -1;
             var splitSource = mod.Source.Split(new char[]{ ':' }, 2);
             var source = splitSource[splitSource.Length-1].Trim();
@@ -35,7 +40,7 @@ namespace Alpacka.Lib.Curse
             
             Addon addon;
             if (!int.TryParse(source, out id)) {
-                addon = allProjects.Data.Find(a => string.Equals(a.Name.Trim(), source, StringComparison.OrdinalIgnoreCase));
+                addon = _allProjects.Data.Find(a => string.Equals(a.Name.Trim(), source, StringComparison.OrdinalIgnoreCase));
                 if (addon == null)
                     throw new Exception($"No Project of name '{ source }' found");
                 // Debug.WriteLine(_addon.ToPrettyJson());
