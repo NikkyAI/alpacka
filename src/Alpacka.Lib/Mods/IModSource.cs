@@ -9,6 +9,10 @@ namespace Alpacka.Lib.Mods
         /// <summary> Returns if this mod source handles the specified source string. </summary>
         bool CanHandle(string source);
         
+        /// <summary> Called once before any calls to Resolve, allowing this mod
+        ///           source to initialize resources once which might take time. </summary>
+        Task Initialize();
+        
         /// <summary> Resolves as much mod information as possible before downloading
         ///           the mod, allowing for some error checking and adding dependencies.
         ///           Returns the download URL or null if the mod should be discarded. </summary>

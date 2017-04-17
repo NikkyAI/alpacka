@@ -9,6 +9,9 @@ namespace Alpacka.Lib.Mods
         public bool CanHandle(string source) =>
             (source.StartsWith("http://") || source.StartsWith("https://"));
         
+        public Task Initialize() =>
+            Task.CompletedTask;
+        
         public Task<string> Resolve(EntryMod mod, string mcVersion, Action<EntryMod> addDependency) =>
             Task.FromResult(mod.Source);
     }
