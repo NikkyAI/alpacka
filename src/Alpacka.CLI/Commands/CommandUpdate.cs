@@ -8,8 +8,6 @@ using Newtonsoft.Json;
 using Alpacka.Lib;
 using Alpacka.Lib.Config;
 using Alpacka.Lib.Net;
-using Alpacka.Lib.Instances;
-using Alpacka.Lib.Instances.MultiMC;
 
 namespace Alpacka.CLI.Commands
 {
@@ -85,13 +83,6 @@ namespace Alpacka.CLI.Commands
         
         public static async Task<int> Execute(string directory, ModpackBuild build = null)
         {
-            // TODO: Move this elsewhere.
-            var handlers = new Dictionary<string, IInstanceHandler> {
-                // TODO: Vanilla handler.
-                { "server", new ServerHandler() },
-                { "multimc", new MultiMCHandler(@"C:\D\games\minecraft\MultiMC") } // FIXME: !!
-            };
-            
             if (build == null) build = await GetBuild(directory);
             
             var safeName   = string.Join("_", build.Name.Split(Path.GetInvalidPathChars()));
@@ -105,10 +96,9 @@ namespace Alpacka.CLI.Commands
             var alpackaInfo = AlpackaInfo.Load(directory);
             
             if (alpackaInfo != null) {
-                var instanceType = alpackaInfo.InstanceType.ToLower();
-                IInstanceHandler instanceHandler;
-                if (!handlers.TryGetValue(instanceType, out instanceHandler)) {
-                    Console.WriteLine($"ERROR: No handler for type '{ instanceType }'");
+                var instanceHandler = AlpackaRegistry.InstanceHandlers[alpackaInfo.InstanceType];
+                if (instanceHandler == null) {
+                    Console.WriteLine($"ERROR: No handler for type '{ alpackaInfo.InstanceType }'");
                     return 1;
                 }
                 instanceHandler.Update(directory, null, build); // FIXME: oldPack?

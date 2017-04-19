@@ -1,12 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Alpacka.Lib;
 using Alpacka.Lib.Git;
-using Alpacka.Lib.Instances;
-using Alpacka.Lib.Instances.MultiMC;
 using Microsoft.Extensions.CommandLineUtils;
 
 namespace Alpacka.CLI.Commands
@@ -28,16 +25,8 @@ namespace Alpacka.CLI.Commands
             HelpOption("-? | -h | --help");
             
             OnExecute(() => {
-                // TODO: Move this elsewhere.
-                var handlers = new Dictionary<string, IInstanceHandler> {
-                    // TODO: Vanilla handler.
-                    { "server", new ServerHandler() },
-                    { "multimc", new MultiMCHandler(@"C:\D\games\minecraft\MultiMC") } // FIXME: !!
-                };
-                
-                var instanceType = argType.Value.ToLowerInvariant();
-                IInstanceHandler instanceHandler;
-                if (!handlers.TryGetValue(instanceType, out instanceHandler)) {
+                var instanceHandler = AlpackaRegistry.InstanceHandlers[argType.Value];
+                if (instanceHandler == null) {
                     Console.WriteLine($"ERROR: No handler for type '{ argType.Value }'");
                     return 1;
                 }
@@ -82,7 +71,7 @@ namespace Alpacka.CLI.Commands
                     Debug.WriteLine($"Installing using instance handler { instanceHandler.Name }");
                     instanceHandler.Install(instancePath, pack);
                     
-                    var info = new AlpackaInfo { InstanceType = instanceType };
+                    var info = new AlpackaInfo { InstanceType = instanceHandler.Name };
                     info.Save(instancePath);
                     
                     Console.WriteLine($"Successfully installed new { instanceHandler.Name } instance into '{ instancePath }'");
