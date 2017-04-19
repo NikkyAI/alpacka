@@ -8,19 +8,20 @@ namespace Alpacka.Lib.Instances.MultiMC
 {
     public class MultiMCHandler : IInstanceHandler
     {
-        private readonly string _multiMCPath;
+        // FIXME: Use some configuration file instead.
+        private static readonly string MULTIMC_PATH = @"C:\D\games\minecraft\MultiMC";
+        
         private readonly string _instancesPath;
         
         public string Name => "MultiMC";
         
-        public MultiMCHandler(string multiMCPath)
+        public MultiMCHandler()
         {
-            if (!Directory.Exists(multiMCPath)) throw new ArgumentException(
-                $"The specified MultiMC directory does not exist ({ multiMCPath })", nameof(multiMCPath));
+            if (!Directory.Exists(MULTIMC_PATH)) throw new Exception(
+                $"The MultiMC directory does not exist ({ MULTIMC_PATH })");
             // TODO: Verify that the specified path actually contains MultiMC?
             
-            _multiMCPath   = multiMCPath;
-            _instancesPath = Path.Combine(_multiMCPath, "instances");
+            _instancesPath = Path.Combine(MULTIMC_PATH, "instances");
         }
         
         public string GetInstancePath(string instanceName) =>
