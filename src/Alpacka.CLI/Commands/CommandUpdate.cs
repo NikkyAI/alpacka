@@ -118,7 +118,8 @@ namespace Alpacka.CLI.Commands
                 : await CommandBuild.Build(ModpackConfig.LoadYAML(directory));
         }
         
-        public static Task DownloadMods(List<EntryMod> modList, Side side, string modsDir) {
+        public static async Task DownloadMods(List<EntryMod> modList, Side side, string modsDir) {
+            // TODO: Handle this without deleting the mods directory.
             if (Directory.Exists(modsDir))
                 Directory.Delete(modsDir, true);
             Directory.CreateDirectory(modsDir);
@@ -126,11 +127,11 @@ namespace Alpacka.CLI.Commands
             var mods = modList.Where(mod => (mod.Side & side) == side).ToList(); 
             using (var fileCache = new FileCache(Path.Combine(Constants.CachePath, "mods")))
             using (var downloader = new FileDownloaderURL(fileCache))
-                return Task.WhenAll(mods.Select(async mod => {
+                await Task.WhenAll(mods.Select(async mod => {
                     var file = await downloader.Download(mod.Source);
                     if ((mod.MD5 != null) && (mod.MD5 != file.MD5))
                         throw new Exception($"MD5: '{ mod.MD5 }' does not match downloaded file's MD5: '{ file.MD5 }' { mod.Name }");
-                    File.Copy(file.Path, Path.Combine(modsDir, file.FileName), true);
+                    File.Copy(file.Path, Path.Combine(modsDir, file.FileName));
                 }));
         }
     }
