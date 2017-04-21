@@ -20,7 +20,7 @@ namespace Alpacka.Lib
         {
             if (Directory.Exists(path))
                 path = Path.Combine(path, Constants.INSTANCE_INFO_FILE);
-            File.WriteAllText(path, JsonConvert.SerializeObject(this));
+            File.WriteAllText(path, JsonConvert.SerializeObject(this, Formatting.Indented));
         }
     }
 }
