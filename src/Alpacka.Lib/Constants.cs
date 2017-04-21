@@ -8,11 +8,11 @@ namespace Alpacka.Lib
         public static readonly string MC_MODS_DIR   = "mods";
         public static readonly string MC_CONFIG_DIR = "config";
         
-        // TODO: Rename files to "alpacka-pack-xxx.yyy"?
+        // TODO: Rename files to "alpacka.packxxx.yyy"?
         public static readonly string PACK_CONFIG_FILE = "packconfig.yaml";
         public static readonly string PACK_BUILD_FILE  = "packbuild.json";
         
-        public static readonly string INSTANCE_INFO_FILE = "alpacka-instance-info.json";
+        public static readonly string INSTANCE_INFO_FILE = "alpacka.instance.json";
         
         public static string CachePath { get; } = Path.Combine(
             Environment.GetEnvironmentVariable("LocalAppData")
