@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Alpacka.Lib;
 using Alpacka.Lib.Git;
+using Alpacka.Lib.Utility;
 using Microsoft.Extensions.CommandLineUtils;
 
 namespace Alpacka.CLI.Commands

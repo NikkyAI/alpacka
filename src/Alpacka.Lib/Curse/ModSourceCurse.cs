@@ -54,7 +54,7 @@ namespace Alpacka.Lib.Curse
             var fileId = await FindFileId(addon, mod, mcVersion, optional);
             if (fileId == -1) {
                 if (optional) {
-                    Debug.WriteLine($"no file found for { mod.Source.ToPrettyJson() } This is not a Error");
+                    Debug.WriteLine($"no file found for { mod.Source } This is not a Error");
                     return null; // We do not throw a error because its not required
                 // We should probably not reach this point ever:
                 } else throw new Exception($"No File of type 'Release' found for { mod.Name } in { mcVersion }");
