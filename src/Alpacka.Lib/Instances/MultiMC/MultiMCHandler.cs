@@ -2,34 +2,31 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using YamlDotNet.Serialization;
 using Alpacka.Lib.Config;
+using Alpacka.Lib.Utility;
 
 namespace Alpacka.Lib.Instances.MultiMC
 {
     public class MultiMCHandler : IInstanceHandler
     {
-        // FIXME: Use some configuration file instead.
-        private static readonly string MULTIMC_PATH = @"C:\D\games\minecraft\MultiMC";
-        
-        private readonly string _instancesPath;
+        private readonly Config _config = Config.Load();
         
         public string Name => "MultiMC";
         
         public MultiMCHandler()
         {
-            if (!Directory.Exists(MULTIMC_PATH)) throw new Exception(
-                $"The MultiMC directory does not exist ({ MULTIMC_PATH })");
+            if (!Directory.Exists(_config.MultiMCPath)) throw new Exception(
+                $"MultiMC path does not exist ({ _config.MultiMCPath })");
             // TODO: Verify that the specified path actually contains MultiMC?
-            
-            _instancesPath = Path.Combine(MULTIMC_PATH, "instances");
         }
         
         public string GetInstancePath(string instanceName) =>
             // TODO: Custom instances folder? Is this possible?
-            Path.Combine(_instancesPath, instanceName, "minecraft");
+            Path.Combine(_config.InstancesPath, instanceName, "minecraft");
         
         public List<string> GetInstances() =>
-            Directory.EnumerateDirectories(_instancesPath)
+            Directory.EnumerateDirectories(_config.InstancesPath)
                 .Select(dir => Path.Combine(dir, "minecraft"))
                 .Where(Directory.Exists) // FIXME: Only include alpacka instances.
                 .ToList();
@@ -67,6 +64,19 @@ namespace Alpacka.Lib.Instances.MultiMC
         {
             var multiMCInstancePath = Directory.GetParent(instancePath).FullName;
             Directory.Delete(multiMCInstancePath, true);
+        }
+        
+        
+        public class Config : UserConfig
+        {
+            public override string Name { get; } = "multimc";
+            
+            public string MultiMCPath { get; set; }
+            
+            [YamlIgnore]
+            public string InstancesPath => Path.Combine(MultiMCPath, "instances");
+            
+            public static Config Load() => Load<Config>("multimc");
         }
     }
 }
