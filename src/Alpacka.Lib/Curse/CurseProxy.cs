@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 using RestEase;
+using Alpacka.Lib.Utility;
 
 namespace Alpacka.Lib.Curse
 {
@@ -88,19 +88,8 @@ namespace Alpacka.Lib.Curse
             
             Debug.WriteLine("Authenticate");
             
-            string path = Path.Combine(Constants.ConfigPath, "curse_auth.yaml");
-            var deserializer = new DeserializerBuilder()
-                .IgnoreUnmatchedProperties()
-                .WithNamingConvention(new CamelCaseNamingConvention())
-                .Build();
-                
-            // TODO: ask for username / password -> save to config
-            
-            LoginRequest auth;
-            using (var reader = new StreamReader(File.OpenRead(path)))
-                auth = deserializer.Deserialize<LoginRequest>(reader);
-            
-            var response = await api.Authenticate(auth);
+            var config = Config.Load(); // FIXME: Rewrite to run only once for ModSourceCurse.
+            var response = await api.Authenticate(config.Request);
             var authResponse = response.GetContent();
             
             var token = $"Token { authResponse.Session.UserId }:{ authResponse.Session.Token }";
@@ -240,6 +229,24 @@ namespace Alpacka.Lib.Curse
             var addonFileChangelog = response.GetContent();
             
             return addonFileChangelog;
+        }
+        
+        
+        public class Config : UserConfig
+        {
+            public override string Name { get; } = "curse_auth";
+            
+            public string Username { get; set; }
+            public string Password { get; set; }
+            
+            // TODO: Automatically encrypt password?
+            [YamlIgnore]
+            public LoginRequest Request => new LoginRequest {
+                Username = Username,
+                Password = Password
+            };
+            
+            public static Config Load() => Load<Config>("curse_auth");
         }
     }
 }

@@ -3,6 +3,7 @@ using System.IO;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using YamlDotNet.Serialization.NodeDeserializers;
+using Alpacka.Lib.Utility;
 
 namespace Alpacka.Lib.Config
 {

@@ -9,16 +9,17 @@ namespace Alpacka.Lib.Config
     {
         public string PackVersion { get; set; }
         
+        public ModpackBuild() {  }
         public ModpackBuild(Modpack pack)
         {
-            Name = pack.Name;
-            Description = pack.Description;
-            Authors = pack.Authors;
+            Name         = pack.Name;
+            Description  = pack.Description;
+            Authors      = pack.Authors;
             Contributors = pack.Contributors;
-            Links = pack.Links;
+            Links        = pack.Links;
             
             MinecraftVersion = pack.MinecraftVersion;
-            ForgeVersion = pack.ForgeVersion;
+            ForgeVersion     = pack.ForgeVersion;
             
             Mods = pack.Mods;
         }

@@ -8,7 +8,6 @@ using Newtonsoft.Json;
 using Alpacka.Lib;
 using Alpacka.Lib.Config;
 using Alpacka.Lib.Net;
-using Alpacka.Lib.Instances;
 
 namespace Alpacka.CLI.Commands
 {
@@ -17,27 +16,30 @@ namespace Alpacka.CLI.Commands
         public CommandUpdate()
         {
             Name = "update";
-            Description = "Update the current alpacka pack";
+            Description = "Updates an alpacka pack, downloading mods";
             
+            /* TODO: Implement version argument.
             var argVersion = Argument("[version]",
-                "Version to update to, can be a release version (git tag), or any git commit-ish");
+                "Version to update to, can be a release version " +
+                "('recommended', 'latest' or git tag) or any git " +
+                "commit-ish (branch, commit, 'HEAD~1' etc.)"); */
             
             var optDirectory = Option("-d | --directory",
-                "Sets the pack directory", CommandOptionType.SingleValue);
+                "Sets the directory of the pack to update", CommandOptionType.SingleValue);
             
             HelpOption("-? | -h | --help");
             
             OnExecute(async () => {
-                if (argVersion.Value == null)
-                    throw new NotImplementedException("List versions");
+                // if (argVersion.Value == null)
+                //     throw new NotImplementedException("List versions");
                 
-                var directory = optDirectory.HasValue()
+                var instancePath = optDirectory.HasValue()
                     ? Path.GetFullPath(optDirectory.Value())
                     : Directory.GetCurrentDirectory();
                 
                 // TODO: switch branches and stuff
                 
-                return await CommandUpdate.Execute(directory);
+                return await CommandUpdate.Execute(instancePath);
                 // // read packbuild.json
                 
                 // ModpackVersion build = await GetBuild(directory);
@@ -83,64 +85,27 @@ namespace Alpacka.CLI.Commands
         {
             if (build == null) build = await GetBuild(directory);
             
-            var name       = string.Join("_", build.Name.Split(Path.GetInvalidPathChars()));
+            var safeName   = string.Join("_", build.Name.Split(Path.GetInvalidPathChars()));
             var prettyName = build.Name;
             var mcVersion  = build.MinecraftVersion;
             
             var forgeData    = await ForgeVersionData.Download();
             var forgeVersion = forgeData[build.ForgeVersion];
             
-            var modsDir   = Path.Combine(directory, Constants.MC_MODS_DIR);
+            var modsDir     = Path.Combine(directory, Constants.MC_MODS_DIR);
             var alpackaInfo = AlpackaInfo.Load(directory);
-            switch (alpackaInfo.Type) {
-                
-                case InstallType.MultiMC:
-                    var packInstanceFolder = Directory.GetParent(directory).FullName;
-                    var instanceConfigPath = Path.Combine(packInstanceFolder, "instance.cfg");
-                    if (!File.Exists(instanceConfigPath))
-                        throw new Exception("Not a MultiMC instance");
-                    
-                    // update minecraft version in instance.cfg
-                    var instanceCfg = File.ReadAllText(instanceConfigPath);
-                    var intendedVersion = $"\nIntendedVersion={ mcVersion }";
-                    if (!instanceCfg.Contains(intendedVersion)) {
-                        instanceCfg += intendedVersion;
-                        File.WriteAllText(instanceConfigPath, instanceCfg);
-                    }
-                    
-                    // TODO: copy icon and set icon = gitm_{ name }
-                    
-                    Console.WriteLine($"Installing Forge { build.ForgeVersion } ...");
-                    var installedForge = await ForgeInstaller.InstallMultiMC(packInstanceFolder, build);
-                    
-                    Console.WriteLine("Downloading mods ...");
-                    await DownloadMods(build.Mods, Side.Client, modsDir);
-                    break;
-                
-                case InstallType.Server:
-                    Console.WriteLine("Downloading mods ...");
-                    await DownloadMods(build.Mods, Side.Server, modsDir);
-                    
-                    Console.WriteLine($"Installing Forge { build.ForgeVersion } ...");
-                    var forgeFile = await ForgeInstaller.InstallServer(directory, build, forgeVersion);
-                    
-                    Console.WriteLine($"Start forge server by executing { forgeFile }");
-                    
-                    // TODO: mabye later use ModpackDownloader
-                    // List<DownloadedMod> downloaded;
-                    // using (var modsCache = new FileCache(Path.Combine(Constants.CachePath, "mods")))
-                    // using (var downloader = new ModpackDownloader(modsCache)
-                    //         .WithSourceHandler(new ModSourceURL()))
-                    //     downloaded = await downloader.Run(modpackVersion);
-                        
-                    // foreach (var downloadedMod in downloaded.Where(d => d.Mod.Side.IsServer()))
-                    //     File.Copy(downloadedMod.File.Path, Path.Combine(modsDir, downloadedMod.File.FileName));
-                    break;
-                
-                default:
-                    throw new NotImplementedException();
-                
+            
+            if (alpackaInfo != null) {
+                var instanceHandler = AlpackaRegistry.InstanceHandlers[alpackaInfo.InstanceType];
+                if (instanceHandler == null) {
+                    Console.WriteLine($"ERROR: No handler for type '{ alpackaInfo.InstanceType }'");
+                    return 1;
+                }
+                instanceHandler.Update(directory, null, build); // FIXME: oldPack?
             }
+            
+            Console.WriteLine("Downloading mods ...");
+            await DownloadMods(build.Mods, Side.Client, modsDir);
             
             return 0;
         }
@@ -153,7 +118,8 @@ namespace Alpacka.CLI.Commands
                 : await CommandBuild.Build(ModpackConfig.LoadYAML(directory));
         }
         
-        public static Task DownloadMods(List<EntryMod> modList, Side side, string modsDir) {
+        public static async Task DownloadMods(List<EntryMod> modList, Side side, string modsDir) {
+            // TODO: Handle this without deleting the mods directory.
             if (Directory.Exists(modsDir))
                 Directory.Delete(modsDir, true);
             Directory.CreateDirectory(modsDir);
@@ -161,11 +127,11 @@ namespace Alpacka.CLI.Commands
             var mods = modList.Where(mod => (mod.Side & side) == side).ToList(); 
             using (var fileCache = new FileCache(Path.Combine(Constants.CachePath, "mods")))
             using (var downloader = new FileDownloaderURL(fileCache))
-                return Task.WhenAll(mods.Select(async mod => {
+                await Task.WhenAll(mods.Select(async mod => {
                     var file = await downloader.Download(mod.Source);
                     if ((mod.MD5 != null) && (mod.MD5 != file.MD5))
                         throw new Exception($"MD5: '{ mod.MD5 }' does not match downloaded file's MD5: '{ file.MD5 }' { mod.Name }");
-                    File.Copy(file.Path, Path.Combine(modsDir, file.FileName), true);
+                    File.Copy(file.Path, Path.Combine(modsDir, file.FileName));
                 }));
         }
     }

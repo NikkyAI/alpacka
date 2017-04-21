@@ -5,22 +5,22 @@ namespace Alpacka.Lib
 {
     public class AlpackaInfo
     {
-        public void Save(string dir) {
-            string text = JsonConvert.SerializeObject(this);
-            File.WriteAllText(Path.Combine(dir, Constants.INFO_FILE), text);
+        public string InstanceType { get; set; }
+        
+        public static AlpackaInfo Load(string path)
+        {
+            if (Directory.Exists(path))
+                path = Path.Combine(path, Constants.INSTANCE_INFO_FILE);
+            return File.Exists(path)
+                ? JsonConvert.DeserializeObject<AlpackaInfo>(File.ReadAllText(path))
+                : null;
         }
         
-        public static AlpackaInfo Load(string dir) {
-            string text = File.ReadAllText(Path.Combine(dir, Constants.INFO_FILE));
-            return JsonConvert.DeserializeObject<AlpackaInfo>(text);
+        public void Save(string path)
+        {
+            if (Directory.Exists(path))
+                path = Path.Combine(path, Constants.INSTANCE_INFO_FILE);
+            File.WriteAllText(path, JsonConvert.SerializeObject(this, Formatting.Indented));
         }
-        public InstallType Type { get; set; }
-    }
-    
-    public enum InstallType
-    {
-        Vanilla,
-        Server,
-        MultiMC
     }
 }

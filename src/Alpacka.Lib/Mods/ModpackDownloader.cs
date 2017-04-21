@@ -12,7 +12,6 @@ namespace Alpacka.Lib.Mods
     public class ModpackDownloader : IDisposable
     {
         private readonly IFileDownloader _fileDownloader;
-        private readonly List<IModSource> _sources = new List<IModSource>();
         
         public ModpackDownloader(FileCache modsCache)
             : this(new FileDownloaderURL(modsCache)) {  }
@@ -26,9 +25,6 @@ namespace Alpacka.Lib.Mods
             (_fileDownloader as IDisposable)?.Dispose();
             GC.SuppressFinalize(this);
         }
-        
-        public ModpackDownloader WithSourceHandler(IModSource source)
-            { _sources.Add(source); return this; }
         
         
         /// <summary> Resolves the mods from the specified ModpackConfig and creates a
@@ -44,7 +40,7 @@ namespace Alpacka.Lib.Mods
                     .GetFullVersion();
             
             var processed  = new List<ModWrapper>();
-            var processing = config.Mods.Select(mod => new ModWrapper(mod.Clone(), _sources)).ToList();
+            var processing = config.Mods.Select(mod => new ModWrapper(mod.Clone())).ToList();
             FireDownloaderExceptionIfErrored(processing, "parsing mod sources");
             
             var byName  = new Dictionary<string, ModWrapper>();
@@ -95,7 +91,7 @@ namespace Alpacka.Lib.Mods
                 }
                 
                 processing = dependencies
-                    .Select(mod => new ModWrapper(mod, _sources, true))
+                    .Select(mod => new ModWrapper(mod, true))
                     .ToList();
                 dependencies.Clear();
             }
@@ -147,10 +143,10 @@ namespace Alpacka.Lib.Mods
                 return (name.Length > 0) ? name : Mod.Name;
             } }
             
-            internal ModWrapper(EntryMod mod, List<IModSource> sources, bool isDependency = false) {
+            internal ModWrapper(EntryMod mod, bool isDependency = false) {
                 Mod = mod;
                 IsDependency = isDependency;
-                SourceHandler = sources.Find(src => src.CanHandle(mod.Source));
+                SourceHandler = AlpackaRegistry.SourceHandlers.Find(mod.Source);
                 if (SourceHandler == null)
                     Exception = new Exception("No source handling for '{ mod.Source }'");
             }

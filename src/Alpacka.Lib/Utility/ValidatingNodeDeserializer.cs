@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 
-namespace Alpacka.Lib.Config
+namespace Alpacka.Lib.Utility
 {
     public class ValidatingNodeDeserializer : INodeDeserializer
     {
