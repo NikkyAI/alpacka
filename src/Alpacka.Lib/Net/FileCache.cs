@@ -11,6 +11,13 @@ namespace Alpacka.Lib.Net
     {
         private static readonly string CACHE_LIST_FILE = "cache.json";
         
+        private static readonly JsonSerializerSettings _jsonSettings =
+            new JsonSerializerSettings {
+                Formatting = Formatting.Indented,
+                NullValueHandling = NullValueHandling.Ignore
+            };
+        
+        
         private readonly Dictionary<string, Task<DownloadedFile>> _dict =
             new Dictionary<string, Task<DownloadedFile>>();
         private bool _disposed = false;
@@ -18,20 +25,20 @@ namespace Alpacka.Lib.Net
         public string CacheDirectory { get; }
         public string CacheListPath { get; }
         
+        
         public FileCache(string directory)
         {
             Directory.CreateDirectory(directory);
             CacheDirectory = directory;
             CacheListPath  = Path.Combine(CacheDirectory, CACHE_LIST_FILE);
             
-            if (File.Exists(CacheListPath)) {
-                var files = JsonConvert.DeserializeObject<DownloadedFile[]>(
-                    File.ReadAllText(CacheListPath));
-                foreach (var file in files) {
-                    file.Path = Path.Combine(directory, file.FileName);
-                    if (!File.Exists(file.Path)) continue;
-                    _dict.Add(file.FileName, Task.FromResult(file));
-                }
+            if (!File.Exists(CacheListPath)) return;
+            var contents = File.ReadAllText(CacheListPath);
+            var files = JsonConvert.DeserializeObject<DownloadedFile[]>(contents, _jsonSettings);
+            foreach (var file in files) {
+                file.Path = Path.Combine(directory, file.FileName);
+                if (!File.Exists(file.Path)) continue;
+                _dict.Add(file.URL, Task.FromResult(file));
             }
         }
         
@@ -45,26 +52,39 @@ namespace Alpacka.Lib.Net
                 .Where(task => task.IsCompleted)
                 .Select(task => task.Result)
                 .ToArray();
-            var str = JsonConvert.SerializeObject(files, Formatting.Indented);
+            var str = JsonConvert.SerializeObject(files, _jsonSettings);
             File.WriteAllText(CacheListPath, str);
             GC.SuppressFinalize(this);
         }
         
         
-        public Task<DownloadedFile> Get(string name, Func<Task<DownloadedFile>> factory)
+        public Task<DownloadedFile> Get(string url, Func<DownloadedFile, Task<DownloadedFile>> factory)
         { lock (_dict) {
             Task<DownloadedFile> oldTask;
-            return (!_dict.TryGetValue(name, out oldTask) ||
-                    oldTask.IsCanceled || oldTask.IsFaulted)
-                ? _dict[name] = Move(name, factory) : oldTask;
+            // Check if there's already a task in the dictionary
+            // for this URL. (Skip faulted and cancelled tasks.)
+            return _dict[url] = (_dict.TryGetValue(url, out oldTask) &&
+                                 !oldTask.IsFaulted && !oldTask.IsCanceled)
+                // If so, check if the task is either not completed or still recent.
+                ? (!oldTask.IsCompleted || IsTaskRecent(oldTask))
+                    ? oldTask // Return task if recent, or call factory with old file to see if it's ..
+                    : ProcessTask(oldTask.Result, factory) // .. still valid or download the new one.
+                // Otherwise create a new download task for this URL.
+                : ProcessTask(null, factory);
         } }
         
-        public Task<DownloadedFile> Replace(string name, Func<Task<DownloadedFile>> factory)
-            { lock (_dict) return _dict[name] = Move(name, factory); }
+        private Task<DownloadedFile> ProcessTask(DownloadedFile oldFile, Func<DownloadedFile, Task<DownloadedFile>> factory) =>
+            factory(oldFile).ContinueWith((task, state) => {
+                // If the result is not the same as the old downloaded
+                // file (may be null), move it into the cache directory.
+                if (task.Result != oldFile) {
+                    if (oldFile != null) File.Delete(oldFile.Path); // Delete the old one!
+                    task.Result.Move(Path.Combine(CacheDirectory, task.Result.FileName));
+                }
+                return task.Result;
+            }, DateTime.Now); // Set the tasks AsyncState to the current time.
         
-        
-        /// <summary> Moves the DownloadedFile to the cache Directory after completion. </summary>
-        private Task<DownloadedFile> Move(string name, Func<Task<DownloadedFile>> factory) =>
-            factory().ContinueWith(task => task.Result.Move(Path.Combine(CacheDirectory, name), true));
+        private bool IsTaskRecent(Task task) =>
+            (DateTime.Now - (DateTime?)task.AsyncState) < TimeSpan.FromSeconds(10);
     }
 }
