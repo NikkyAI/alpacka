@@ -49,15 +49,10 @@ namespace Alpacka.Lib.Instances.MultiMC
         {
             var multiMCInstancePath = Path.GetDirectoryName(instancePath);
             
+            // update minecraft and forge version
             if (newPack.MinecraftVersion != oldPack?.MinecraftVersion)
-                MultiMCInstance.UpdateVersion(multiMCInstancePath, newPack.MinecraftVersion);
+                MultiMCInstance.UpdateVersion(multiMCInstancePath, newPack.MinecraftVersion, newPack.ForgeVersion);
             
-            if (newPack.ForgeVersion != oldPack?.ForgeVersion) {
-                var patchData = MultiMCMeta.GetForgePatch($"{ newPack.MinecraftVersion }-{ newPack.ForgeVersion }");
-                var patchPath = Path.Combine(instancePath, "patches", "net.minecraftforge.json");
-                Directory.CreateDirectory(Path.GetDirectoryName(patchPath));
-                File.WriteAllText(patchPath, patchData);
-            }
         }
         
         public void Remove(string instancePath)

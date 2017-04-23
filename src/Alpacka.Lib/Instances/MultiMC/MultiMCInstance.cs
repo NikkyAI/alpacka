@@ -28,11 +28,11 @@ namespace Alpacka.Lib.Instances.MultiMC
         /// <summary> Update IntendedVersion by appending to the config file.
         ///           This is a bit hacky but works, as the last occurance counts. </summary>
         // TODO: Implement loading instance.cfg so we don't need to hacky hacky.
-        public static void UpdateVersion(string path, string version)
+        public static void UpdateVersion(string path, string mcversion, string forgeversion)
         {
             if (Directory.Exists(path))
                 path = Path.Combine(path, CONFIG_FILE);
-            File.AppendAllText(path, $"IntendedVersion={ version }\n");
+            File.AppendAllText(path, $"IntendedVersion={ mcversion }\nForgeVersion={ forgeversion }\n");
         }
     }
 }
