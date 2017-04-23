@@ -67,9 +67,9 @@ namespace Alpacka.Lib.Net
                 response.EnsureSuccessStatusCode();
                 
                 // Try using suggested file name or getting the it from the request uri.
-                var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
-                    ?? response.Content.Headers.ContentDisposition?.FileName
-                    ?? GetFileNameFromUri(response.RequestMessage.RequestUri);
+                var fileName = response.Content.Headers.ContentDisposition?.FileNameStar?.Trim('"') // Might be wrapped in quotes which
+                    ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"')             // are not stripped automatically.
+                    ?? GetFileNameFromURI(response.RequestMessage.RequestUri);
                 if (fileName == null) throw new NoFileNameException(url);
                 
                 var transform = new MD5Transform();
@@ -86,11 +86,11 @@ namespace Alpacka.Lib.Net
                 
             });
         
-        private static string GetFileNameFromUri(Uri uri)
+        private static string GetFileNameFromURI(Uri uri)
         {
             try {
                 var fileName = Path.GetFileName(uri.ToString());
-                if (!fileName.EndsWith(".jar")) return null;
+                if (fileName.IndexOf('.') < 0) return null;
                 return fileName;
             } catch { return null; }
         }
