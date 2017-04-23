@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
@@ -6,40 +5,50 @@ namespace Alpacka.Lib.Curse
 {
     public class Addon
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public PackageTypes PackageType { get; set; }
-        public string Summary { get; set; }
-        public string WebSiteURL { get; set; }
-        public List<AddOnAttachment> Attachments { get; set; }
-        public List<AddOnAuthor> Authors { get; set; }
+        public AddonAttachment[] Attachments { get; set; }
+        public AddonAuthor[] Authors { get; set; }
         public string AvatarUrl { get; set; }
-        public List<AddOnCategory> Categories { get; set; }
+        public AddonCategory[] Categories { get; set; }
         public CategorySection CategorySection { get; set; }
-        public int CommentCount { get; set; }
         public int DefaultFileId { get; set; }
         public string DonationUrl { get; set; }
-        public float DownloadCount { get; set; }
         public string ExternalUrl { get; set; }
         public int GameId { get; set; }
+        public GameVersionLatestFile[] GameVersionLatestFiles { get; set; }
         public int IconId { get; set; }
-        public int InstallCount { get; set; }
-        public int IsFeatured { get; set; }
-        
-        public List<AddonFile> LatestFiles { get; set; }
-        public List<GameVersionLatestFile> GameVersionLatestFiles { get; set; }
-        
-        public int Likes { get; set; }
-        public double PopularityScore { get; set; }
+        public int Id { get; set; }
+        public AddonFile[] LatestFiles { get; set; }
+        public string Name { get; set; }
+        public PackageTypes PackageType { get; set; }
         public string PrimaryAuthorName { get; set; }
-        public string PrimaryCategoryAvatarUrl { get; set; }
         public int PrimaryCategoryId { get; set; }
-        public string PrimaryCategoryName { get; set; }
-        public int Rating { get; set; }
         public ProjectStage Stage { get; set; }
-        
         public ProjectStatus Status { get; set; }
-        public int GamePopularityRank { get; set; }
+        public string Summary { get; set; }
+        public string WebSiteURL { get; set; }
+    }
+    
+    
+    public class AddonFile
+    {
+        public int AlternateFileId { get; set; }
+        public AddonFileDependency[] Dependencies { get; set; }
+        public string DownloadURL { get; set; }
+        public System.DateTime FileDate { get; set; }
+        public string FileName { get; set; }
+        public string FileNameOnDisk { get; set; }
+        public FileStatus FileStatus { get; set; }
+        public string[] GameVersion { get; set; }
+        public int Id { get; set; }
+        public bool IsAlternate { get; set; }
+        public bool IsAvailable { get; set; }
+        public ReleaseType ReleaseType { get; set; }
+    }
+    
+    public class ProjectList
+    {
+        public long Timestamp { get; set; }
+        public List<Addon> Data { get; set; }
     }
     
     public enum PackageTypes
@@ -52,7 +61,7 @@ namespace Alpacka.Lib.Curse
         Mod = 6
     }
     
-    public class AddOnAttachment
+    public class AddonAttachment
     {
         public string Description { get; set; }
         public bool IsDefault { get; set; }
@@ -61,14 +70,16 @@ namespace Alpacka.Lib.Curse
         public string Url { get; set; }
     }
     
-     public class AddOnCategory {
+     public class AddonCategory
+     {
         public int Id { get; set; }
         public string Name { get; set; }
         [JsonProperty("url")]
         public string URL { get; set; }
     }
     
-    public class AddOnAuthor {
+    public class AddonAuthor
+    {
         public string Name { get; set; }
         public string Url { get; set; }
     }
@@ -81,7 +92,8 @@ namespace Alpacka.Lib.Curse
         public string ProjectFileName { get; set; }
     }
     
-    public class CategorySection {
+    public class CategorySection
+    {
         public string ExtraIncludePattern { get; set; }
         public int GameID { get; set; }
         public int ID { get; set; }
@@ -91,28 +103,9 @@ namespace Alpacka.Lib.Curse
         public string Path { get; set; }
     }
     
-    public class AddonFile
+    public class AddonFileDependency
     {
-        public int AlternateFileId { get; set; }
-        public List<AddOnFileDependency> Dependencies { get; set; }
-        public string DownloadURL { get; set; }
-        public DateTime FileDate { get; set; }
-        public string FileName { get; set; }
-        public string FileNameOnDisk { get; set; }
-        public FileStatus FileStatus { get; set; }
-        public List<String> GameVersion { get; set; }
-        public int Id { get; set; }
-        public bool IsAlternate { get; set; }
-        public bool IsAvailable { get; set; }
-        public List<AddOnModule> Modules { get; set; }
-        public long PackageFingerprint { get; set; }
-        public ReleaseType ReleaseType { get; set; }
-        
-    }
-    
-    public class AddOnFileDependency
-    {
-        public int AddOnId { get; set; }
+        public int AddonId { get; set; }
         public DependencyType Type { get; set; }
     }
     
@@ -142,12 +135,6 @@ namespace Alpacka.Lib.Curse
         Embedded = 3
     }
     
-    public class AddOnModule
-    {
-        public long Fingerprint { get; set; }
-        public string Foldername { get; set; }
-    }
-    
     public enum ProjectStatus
     {
         Normal = 1,
@@ -170,20 +157,5 @@ namespace Alpacka.Lib.Curse
         MalwareDetected = 11,
         WaitingOnProject = 12,
         ClientOnly = 13
-    }
-    
-    public class AddonDescription
-    {
-        public string Description { get; set; }
-    }
-    
-    public class AddonFiles
-    {
-        public List<AddonFile> Files { get; set; }
-    }
-    
-    public class AddonFileChangelog
-    {
-        public string changelog { get; set; }
     }
 }

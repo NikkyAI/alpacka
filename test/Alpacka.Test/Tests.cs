@@ -6,6 +6,7 @@ using Xunit;
 using Alpacka.Lib.Config;
 using Alpacka.Lib.Curse;
 using Alpacka.Lib.Net;
+using Alpacka.Lib.Utility;
 
 namespace Alpacka.Test
 {
@@ -31,22 +32,15 @@ namespace Alpacka.Test
         public async void DownloadCurse()
         {
             await Task.WhenAll(
-                CurseProxy.GetStatus(),
-                CurseProxy.GetAddon(257572),
-                CurseProxy.GetAddonDescription(257572),
-                CurseProxy.GetAddonFiles(257572),
-                CurseProxy.GetAddonFile(257572, 2382299),
-                CurseProxy.GetAddonFileChangelog(257572, 2382299)
+                CurseMeta.GetAddon(223008),
+                CurseMeta.GetAddon(257572),
+                CurseMeta.GetAddonDescription(257572),
+                CurseMeta.GetAddonDescription(223008),
+                CurseMeta.GetAddonFiles(257572),
+                CurseMeta.GetAddonFiles(223008),
+                CurseMeta.GetAddonFile(257572, 2382299),
+                CurseMeta.GetAddonFileChangelog(257572, 2382299)
             );
-        }
-        
-        [Fact]
-        // FIXME: Expect 500 - Internal server error
-        // https://github.com/amcoder/Curse.RestProxy/issues/4
-        public void DownloadOpenComputers()
-        {
-            Assert.ThrowsAsync<Exception>(() =>
-                CurseProxy.GetAddonFiles(223008));
         }
         
         [Fact]
@@ -54,22 +48,22 @@ namespace Alpacka.Test
         {
             // Compare values from LatestProjects with values received from the RestProxy
             
-            var latest = await LatestProjects.Get();
+            var latest = await ProjectFeed.Get();
             var rnd = new Random();
             var randomData = latest.Data.OrderBy(x => rnd.Next()).ToList();
             
             async Task TestAddon(Addon addon)
             {
-                var realAddon = await CurseProxy.GetAddon(addon.Id);
+                var realAddon = await CurseMeta.GetAddon(addon.Id);
                 Assert.Equal(addon.Status, realAddon.Status);
                 Assert.Equal(addon.Stage, realAddon.Stage);
                 Assert.Equal(addon.PackageType, realAddon.PackageType);
-                for (int i = 0; i < addon.GameVersionLatestFiles.Count; i++)
+                for (int i = 0; i < addon.GameVersionLatestFiles.Length; i++)
                     Assert.Equal(addon.GameVersionLatestFiles[i].FileType, realAddon.GameVersionLatestFiles[i].FileType);
                 
                 foreach (var file in addon.LatestFiles) {
-                    var realFile = await CurseProxy.GetAddonFile(addon.Id, file.Id);
-                    for (int i = 0; i < file.Dependencies.Count; i++)
+                    var realFile = await CurseMeta.GetAddonFile(addon.Id, file.Id);
+                    for (int i = 0; i < file.Dependencies.Length; i++)
                         Assert.Equal(file.Dependencies[i].Type, realFile.Dependencies[i].Type);
                     
                     Assert.Equal(file.FileStatus, realFile.FileStatus);
@@ -77,7 +71,7 @@ namespace Alpacka.Test
                 }
             }
             
-            // Test with 100 random addons.
+            // Test with 100 random Addons.
             
             var batchSize = 10;
             var all = randomData.Take(100)

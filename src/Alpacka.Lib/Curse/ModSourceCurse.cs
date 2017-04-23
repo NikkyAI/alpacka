@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Alpacka.Lib.Config;
 using Alpacka.Lib.Mods;
@@ -23,7 +23,7 @@ namespace Alpacka.Lib.Curse
         
         public async Task Initialize()
         {
-            _allProjects = await LatestProjects.Get();
+            _allProjects = await ProjectFeed.Get();
         }
         
         public async Task<string> Resolve(EntryMod mod, string mcVersion, Action<EntryMod> addDependency)
@@ -43,12 +43,12 @@ namespace Alpacka.Lib.Curse
                 addon = _allProjects.Data.Find(a => string.Equals(a.Name.Trim(), source, StringComparison.OrdinalIgnoreCase));
                 if (addon == null)
                     throw new Exception($"No Project of name '{ source }' found");
-                // Debug.WriteLine(_addon.ToPrettyJson());
+                // Debug.WriteLine(_Addon.ToPrettyJson());
                 id = addon.Id;
-                Debug.WriteLine($"get full addon info for { addon.Name }");
-            } else Debug.WriteLine($"get full addon info for id: { source }");
+                Debug.WriteLine($"get full Addon info for { addon.Name }");
+            } else Debug.WriteLine($"get full Addon info for id: { source }");
             
-            addon = await CurseProxy.GetAddon(id);
+            addon = await CurseMeta.GetAddon(id);
             mod.Name        = mod.Name ?? addon.Name;
             mod.Description = mod.Description ?? addon.Summary;
             if (mod.Links == null) mod.Links = new EntryLinks();
@@ -65,13 +65,13 @@ namespace Alpacka.Lib.Curse
                 } else throw new Exception($"No File of type 'Release' found for { mod.Name } in { mcVersion }");
             }
             
-            var fileInfo = await CurseProxy.GetAddonFile(addon.Id, fileId);
+            var fileInfo = await CurseMeta.GetAddonFile(addon.Id, fileId);
             _modToAddonFile[mod] = fileInfo;
             foreach (var dep in fileInfo.Dependencies) {
                 if (dep.Type == DependencyType.Required) {
-                    var depAddon = await CurseProxy.GetAddon(dep.AddOnId);
+                    var depAddon = await CurseMeta.GetAddon(dep.AddonId);
                     var depMod = new EntryMod {
-                        Source = $"curse:{ dep.AddOnId }",
+                        Source = $"curse:{ dep.AddonId }",
                         Name = depAddon.Name,
                         Side = mod.Side,
                         Version = Release.Latest.ToString() // avoid crashes from listing files
@@ -79,7 +79,7 @@ namespace Alpacka.Lib.Curse
                     _modToDependencyType[depMod] = dep.Type;
                     addDependency(depMod);
                 } else if (dep.Type == DependencyType.Optional) {
-                    var depAddon = await CurseProxy.GetAddon(dep.AddOnId);
+                    var depAddon = await CurseMeta.GetAddon(dep.AddonId);
                     // TODO: Make this available in some form in the return value.
                     Console.WriteLine($"'{ mod.Name }' recommends using '{ depAddon.Name }'");
                 }
@@ -89,15 +89,13 @@ namespace Alpacka.Lib.Curse
         
         public async Task<int> FindFileId(Addon addon, EntryMod mod, string mcVersion, bool optional)
         {
-            // Debug.WriteLine($"find file\n mcVersion: { mcVersion }\n name: { addon.Name }"); // TODO: verbose logging
-            // Debug.WriteLine($"addon: { addon.ToPrettyJson() }"); // TODO: verbose logging
+            // Debug.WriteLine($"find file\n mcVersion: { mcVersion }\n name: { Addon.Name }"); // TODO: verbose logging
+            // Debug.WriteLine($"Addon: { Addon.ToPrettyJson() }"); // TODO: verbose logging
             if (string.Equals(mod.Version, Release.Recommended.ToString(), StringComparison.OrdinalIgnoreCase)) {
                 
-                // FIXME: This can crash with error 500 for OpenComputers, JEI, RFTools etc
-                var addonFiles = await CurseProxy.GetAddonFiles(addon.Id);
+                var addonFiles = await CurseMeta.GetAddonFiles(addon.Id);
                 
-                var sorted = new List<AddonFile>(addonFiles.Files);
-                sorted.Sort((f1, f2) => f1.FileDate.CompareTo(f2.FileDate) );
+                var sorted = addonFiles.OrderBy(f => f.FileDate).ToList();
                 var recommendedFile = sorted.Find(file => (file.GameVersion.Contains(mcVersion) &&
                                                            (file.ReleaseType == ReleaseType.Release)));
                 if (recommendedFile == null) {
@@ -109,14 +107,13 @@ namespace Alpacka.Lib.Curse
                 
             } else if (string.Equals(mod.Version, Release.Latest.ToString(), StringComparison.OrdinalIgnoreCase)) {
                 
-                var latestFile = addon.GameVersionLatestFiles.Find(file => (file.GameVesion == mcVersion));
+                var latestFile = addon.GameVersionLatestFiles.FirstOrDefault(file => (file.GameVesion == mcVersion));
                 if (latestFile != null) return latestFile.ProjectFileId;
                 
             } else {
                 
-                var addonFiles = await CurseProxy.GetAddonFiles(addon.Id);
-                var sorted = addonFiles.Files;
-                sorted.Sort((f1, f2) => f1.FileDate.CompareTo(f2.FileDate));
+                var addonFiles = await CurseMeta.GetAddonFiles(addon.Id);
+                var sorted = addonFiles.OrderBy(f => f.FileDate).ToList();
                 
                 Debug.WriteLine($"mod.Name: { mod.Name } mcVersion: { mcVersion } mod.Version: { mod.Version }");
                 var latestFile = sorted.Find(file => (file.GameVersion.Contains(mcVersion) &&
