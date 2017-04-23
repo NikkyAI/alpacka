@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -24,8 +23,6 @@ namespace Alpacka.Lib.Config
             
             Mods = pack.Mods;
         }
-        
-        public ModpackBuild() { }
         
         public void SaveJSON(string path, bool pretty = false)
         {
