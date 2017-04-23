@@ -2,14 +2,10 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using Microsoft.Extensions.CommandLineUtils;
 using LibGit2Sharp;
 using Alpacka.Lib;
-using Alpacka.Lib.Net;
 using Alpacka.Lib.Mods;
-using Alpacka.Lib.Utility;
-using Alpacka.Lib.Curse;
 using Alpacka.Lib.Config;
 
 namespace Alpacka.CLI.Commands
@@ -32,17 +28,21 @@ namespace Alpacka.CLI.Commands
                 "disable automatically pushing the release. Pushes branch and tag to 'origin'. Does NOT push other tags", CommandOptionType.NoValue);
             
             var optNoCommit = Option("--no-commit",
-                "Do not create a release commit", CommandOptionType.NoValue);
+                "Do not create a release commit, uses the last commit on the branch to tag as release", CommandOptionType.NoValue);
             
             var optBuild = Option("-b | --build",
-                "runs 'build' and generates the packbuild.json, needs to create a extra commit", CommandOptionType.NoValue);
+                "runs 'build' and generates the packbuild.json, needs to create a release commit", CommandOptionType.NoValue);
             
+            var optDirectory = Option("-d | --directory",
+                "Sets the directory of the pack to release", CommandOptionType.SingleValue);
+                
             HelpOption("-? | -h | --help");
             
             OnExecute(async () => {
-                // TODO: Find root directory with pack config file.
-                var directory = Directory.GetCurrentDirectory();
-                
+                var instancePath = optDirectory.HasValue()
+                    ? Path.GetFullPath(optDirectory.Value())
+                    : Directory.GetCurrentDirectory();
+                    
                 if (!string.IsNullOrEmpty(argVersion.Value) && optIncrease.HasValue()) {
                     Console.WriteLine("ERROR: version number and --increase set at the same time");
                     ShowHelp();
@@ -55,7 +55,7 @@ namespace Alpacka.CLI.Commands
                     return 0;
                 }
                 
-                using (var repo = new Repository(directory)) {
+                using (var repo = new Repository(instancePath)) {
                     // check if we are on the default branch
                     //TODO: add a flag for ignoring this
                     var remoteHeadRef = repo.Refs["refs/remotes/origin/HEAD"];
@@ -172,7 +172,7 @@ namespace Alpacka.CLI.Commands
                     using( var config = Configuration.BuildFrom(".") ) {
                         if(!optNoCommit.HasValue()) {
                             if (optBuild.HasValue()) {
-                                var packConfig = ModpackConfig.LoadYAML(directory);
+                                var packConfig = ModpackConfig.LoadYAML(instancePath);
                                 
                                 //TODO: factor out into method in CommandBuild to reduce duplications
                                 try {
@@ -180,7 +180,7 @@ namespace Alpacka.CLI.Commands
                                     
                                     //set pack version
                                     build.PackVersion = buildVersion;
-                                    build.SaveJSON(directory, pretty: true);
+                                    build.SaveJSON(instancePath, pretty: true);
                                 } catch (DownloaderException ex) {
                                     Console.WriteLine(ex.Message);
                                     return 1;
@@ -192,12 +192,12 @@ namespace Alpacka.CLI.Commands
                                 // change only the pack version
                                 
                                 // read json (or build from yaml if no json is found)
-                                var build = CommandUpdate.GetBuild(directory).Result;
+                                var build = CommandUpdate.GetBuild(instancePath).Result;
                                     
                                 //set pack version
                                 build.PackVersion = buildVersion;
                                 
-                                build.SaveJSON(directory, pretty: true);
+                                build.SaveJSON(instancePath, pretty: true);
                                 
                                 // Stage the build file
                                 LibGit2Sharp.Commands.Stage(repo, Constants.PACK_BUILD_FILE, new StageOptions{IncludeIgnored = true});
@@ -224,13 +224,27 @@ namespace Alpacka.CLI.Commands
                     // push to remote
                     //TODO: get username and password or make key based auth work
                     if (!optNoPush.HasValue()) {
-                        foreach(var r in repo.Network.Remotes) {
+                        void Push(string remote, string identifier)
+                        {
+                            Console.WriteLine($"git push { remote } { identifier }"); 
+                            var startInfo = new ProcessStartInfo {
+                                FileName  = "git", // TODO: Allow specifiying java bin path?
+                                Arguments = $"push { remote } { identifier }",
+                                WorkingDirectory = instancePath
+                            };
+                            using (var process = Process.Start(startInfo)) {
+                                process.WaitForExit();
+                                // TODO: Proper error handling. (Redirect process output?)
+                                if (process.ExitCode != 0) throw new Exception(
+                                    $"Failed to push { identifier } to { remote } (exit code { process.ExitCode })");
+                                
+                                Console.WriteLine($"git push { remote } to { identifier } finished"); 
+                            }
+                        }
+                        foreach(var r in repo.Network.Remotes.Where( r => r.Name == "origin" )) {
                             Debug.WriteLine($"Remote: {r.Name}");
-                            var remote = r.Name;
-                            var retTag = await ThreadUtil.RunProcessAsync("git", $"push { remote } { tagName }");
-                            Debug.WriteLine($"git push { remote } { tagName } finished with exit code { retTag }");
-                            var retBranch = await ThreadUtil.RunProcessAsync("git", $"push { remote } { repo.Head.FriendlyName }");
-                            Debug.WriteLine($"git push { remote } { repo.Head.FriendlyName } finished with exit code { retBranch }");
+                            Push(r.Name, tagName);
+                            Push(r.Name, repo.Head.FriendlyName);
                         }
                     } else {
                         Console.WriteLine($"Don't forget to push branch '{ repo.Head.FriendlyName }' and tag '{ tag.FriendlyName }'");
