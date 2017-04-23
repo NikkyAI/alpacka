@@ -39,7 +39,7 @@ namespace Alpacka.Lib.Net
         }
         
         
-        public Task<DownloadedFile> Download(string url) =>
+        public Task<DownloadedFile> Download(string url, string relativePath = null) =>
             _cache.Get(url, async oldFile => {
                 
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -60,29 +60,30 @@ namespace Alpacka.Lib.Net
                 
                 // If file was not modified, return the old one.
                 if (response.StatusCode == HttpStatusCode.NotModified) {
-                    Debug.WriteLine($"Got '{ oldFile.FileName }' from cache");
+                    Debug.WriteLine($"Got '{ oldFile }' from cache");
                     return oldFile;
                 }
                 
                 response.EnsureSuccessStatusCode();
                 
-                // Try using suggested file name or getting the it from the request uri.
-                var fileName = response.Content.Headers.ContentDisposition?.FileNameStar?.Trim('"') // Might be wrapped in quotes which
-                    ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"')             // are not stripped automatically.
+                relativePath = relativePath
+                    ?? response.Content.Headers.ContentDisposition?.FileNameStar?.Trim('"') // Might be wrapped in quotes which
+                    ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"')     // are not stripped automatically.
                     ?? GetFileNameFromURI(response.RequestMessage.RequestUri);
-                if (fileName == null) throw new NoFileNameException(url);
+                if (relativePath == null) throw new NoFileNameException(url);
                 
                 var transform = new MD5Transform();
-                var tempPath  = Path.Combine(_tempDir, fileName);
+                var tempPath  = Path.Combine(_tempDir, GetRandomFileName());
                 using (var writeStream = new CryptoStream(File.OpenWrite(tempPath), transform, CryptoStreamMode.Write))
                     await response.Content.CopyToAsync(writeStream);
                 
-                Debug.WriteLine($"Downloaded '{ fileName }'");
-                return new DownloadedFile(url, tempPath, fileName,
+                var file = new DownloadedFile(url, tempPath, relativePath,
                     lastModified: response.Content.Headers.LastModified,
                     eTag: response.Headers.ETag?.Tag,
                     md5: BitConverter.ToString(transform.Hash)
                         .Replace("-", "").ToLowerInvariant());
+                Debug.WriteLine($"Downloaded '{ file }'");
+                return file;
                 
             });
         
@@ -94,6 +95,9 @@ namespace Alpacka.Lib.Net
                 return fileName;
             } catch { return null; }
         }
+        
+        private static string GetRandomFileName() =>
+            Guid.NewGuid().ToString();
     }
     
     public class NoFileNameException : Exception

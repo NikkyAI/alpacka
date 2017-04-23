@@ -42,7 +42,7 @@ namespace Alpacka.Lib.Instances
             // Run it.
             var startInfo = new ProcessStartInfo {
                 FileName  = "java", // TODO: Allow specifiying java bin path?
-                Arguments = $"-jar \"{ installerFile.Path }\" --installServer", // FIXME: Escape path!
+                Arguments = $"-jar \"{ installerFile.FullPath }\" --installServer", // FIXME: Escape path!
                 WorkingDirectory = instancePath
             };
             using (var process = Process.Start(startInfo)) {

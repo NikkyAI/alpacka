@@ -11,7 +11,6 @@ using LibGit2Sharp;
 using Alpacka.Lib;
 using Alpacka.Lib.Config;
 using Alpacka.Lib.Net;
-using Alpacka.Lib.Instances.MultiMC;
 
 namespace Alpacka.CLI.Commands
 {
@@ -244,7 +243,7 @@ namespace Alpacka.CLI.Commands
                     var file = await downloader.Download(mod.Source);
                     if ((mod.MD5 != null) && (mod.MD5 != file.MD5))
                         throw new Exception($"MD5: '{ mod.MD5 }' does not match downloaded file's MD5: '{ file.MD5 }' { mod.Name }");
-                    File.Copy(file.Path, Path.Combine(modsDir, file.FileName));
+                    File.Copy(file.FullPath, Path.Combine(modsDir, file.FileName));
                 }));
         }
     }

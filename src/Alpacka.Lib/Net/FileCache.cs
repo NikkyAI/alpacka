@@ -36,8 +36,8 @@ namespace Alpacka.Lib.Net
             var contents = File.ReadAllText(CacheListPath);
             var files = JsonConvert.DeserializeObject<DownloadedFile[]>(contents, _jsonSettings);
             foreach (var file in files) {
-                file.Path = Path.Combine(directory, file.FileName);
-                if (!File.Exists(file.Path)) continue;
+                file.FullPath = Path.Combine(directory, file.RelativePath);
+                if (!File.Exists(file.FullPath)) continue;
                 _dict.Add(file.URL, Task.FromResult(file));
             }
         }
@@ -78,8 +78,10 @@ namespace Alpacka.Lib.Net
                 // If the result is not the same as the old downloaded
                 // file (may be null), move it into the cache directory.
                 if (task.Result != oldFile) {
-                    if (oldFile != null) File.Delete(oldFile.Path); // Delete the old one!
-                    task.Result.Move(Path.Combine(CacheDirectory, task.Result.FileName));
+                    if (oldFile != null) File.Delete(oldFile.FullPath); // Delete the old one!
+                    var destination = Path.Combine(CacheDirectory, task.Result.RelativePath);
+                    Directory.CreateDirectory(Path.GetDirectoryName(destination));
+                    task.Result.Move(destination);
                 }
                 return task.Result;
             }, DateTime.Now); // Set the tasks AsyncState to the current time.

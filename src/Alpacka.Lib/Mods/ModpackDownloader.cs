@@ -170,7 +170,7 @@ namespace Alpacka.Lib.Mods
             
             public async Task ExtractModInfo()
             {
-                using (var readStream = File.OpenRead(DownloadedFile.Path)) {
+                using (var readStream = File.OpenRead(DownloadedFile.FullPath)) {
                     try { ModInfo = await MCModInfo.Extract(readStream); }
                     catch (MCModInfoException ex) {
                         Console.WriteLine($"INFO: Could not read mcmod.info of mod '{ this }': { ex.Message }");
