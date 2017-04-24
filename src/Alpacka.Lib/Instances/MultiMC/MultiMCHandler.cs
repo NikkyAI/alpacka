@@ -10,6 +10,7 @@ namespace Alpacka.Lib.Instances.MultiMC
 {
     public class MultiMCHandler : IInstanceHandler
     {
+        public static readonly string CONFIG_FILE = "instance.cfg";
         private readonly Config _config = Config.Load();
         
         public string Name => "MultiMC";
@@ -35,10 +36,14 @@ namespace Alpacka.Lib.Instances.MultiMC
         public void Install(string instancePath, ModpackBuild pack)
         {
             var multiMCInstancePath = Path.GetDirectoryName(instancePath);
+            var multiMCInstanceCfg = Path.Combine(multiMCInstancePath, CONFIG_FILE);
             
-            var instanceConfig = new MultiMCInstance(
-                pack.Name, pack.MinecraftVersion, pack.Description);
-            instanceConfig.Save(multiMCInstancePath);
+            var cfg = new MultiMCConfig(multiMCInstanceCfg);
+            cfg.Config["name"] = pack.Name;
+            cfg.Config["notes"] = pack.Description;
+            cfg.Config["IntendedVersion"] = pack.MinecraftVersion;
+            cfg.Config["InstanceType"] = "OneSix";
+            cfg.Save();
             
             // TODO: Add to instance group.
             
@@ -48,11 +53,13 @@ namespace Alpacka.Lib.Instances.MultiMC
         public void Update(string instancePath, ModpackBuild oldPack, ModpackBuild newPack)
         {
             var multiMCInstancePath = Path.GetDirectoryName(instancePath);
+            var multiMCInstanceCfg = Path.Combine(multiMCInstancePath, CONFIG_FILE);
             
             // update minecraft and forge version
-            if (newPack.MinecraftVersion != oldPack?.MinecraftVersion)
-                MultiMCInstance.UpdateVersion(multiMCInstancePath, newPack.MinecraftVersion, newPack.ForgeVersion);
-            
+            var cfg = new MultiMCConfig(multiMCInstanceCfg);
+            cfg.Config["IntendedVersion"] = newPack.MinecraftVersion;
+            cfg.Config["ForgeVersion"] = newPack.ForgeVersion;
+            cfg.Save();
         }
         
         public void Remove(string instancePath)
@@ -68,8 +75,11 @@ namespace Alpacka.Lib.Instances.MultiMC
             
             public string MultiMCPath { get; set; }
             
+            private MultiMCConfig _cfg => new MultiMCConfig(Path.Combine(MultiMCPath, "multimc.cfg"));
+            
             [YamlIgnore]
-            public string InstancesPath => Path.Combine(MultiMCPath, "instances");
+            public string InstancesPath => 
+                Path.Combine(MultiMCPath, _cfg.Config["InstanceDir"]);
             
             public static Config Load() => Load<Config>("multimc");
         }
