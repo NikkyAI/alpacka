@@ -54,6 +54,11 @@ editors:
 - sublime
 - anything with yaml and json highlighters and git integration
 
+terminal:
+- terminator
+- Git Bash (builtin to git on windows)
+- vscode integrated terminal (can be configured to use git bash)
+
 MC launcher:
 - MultiMC (the only supported launcher atm)
 
