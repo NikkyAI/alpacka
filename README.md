@@ -4,7 +4,7 @@
 
 System: any OS that supports dotnet core will be supported [supported runtime ids](https://docs.microsoft.com/en-us/dotnet/articles/core/rid-catalog#windows-rids)   
 and all systems that manage to somehow install the runtime and sdk will probably work as well   
-At the Moment due to a bug Centos7 and Archlinux are not supported (or at least all git related commands are broken #13 )
+At the Moment due to a bug Centos7 and Archlinux are not supported (or at least all git related commands are broken [#13](../../issues/13) )
 
 It is recommended to install Git https://git-scm.com/downloads (actually required for now)
 it is required for creating packs to have a proper git config set up (`user.name`, `user.email`, `core.editor`) as well as **`ssh keys`**
