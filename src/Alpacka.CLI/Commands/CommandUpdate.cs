@@ -82,7 +82,7 @@ namespace Alpacka.CLI.Commands
                     }
                     
                     var remoteHeadRef = repo.Refs["refs/remotes/origin/HEAD"];
-                    bool isDefaultBranch = repo.Head.TrackedBranch?.CanonicalName == remoteHeadRef.TargetIdentifier;
+                    bool isDefaultBranch = repo.Head.TrackedBranch?.CanonicalName == remoteHeadRef?.TargetIdentifier; //NOTE: remoteHeadRef can be null, if the remote repo has it not defined maybe because there is only one branch
                     Debug.WriteLine($"is default branch: {isDefaultBranch}");
                     if(argVersion.Value == null) {
                         
