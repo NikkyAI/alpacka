@@ -4,8 +4,8 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.CommandLineUtils;
 using Alpacka.Lib;
-using Alpacka.Lib.Config;
 using Alpacka.Lib.Net;
+using Alpacka.Lib.Pack;
 
 namespace Alpacka.CLI.Commands
 {

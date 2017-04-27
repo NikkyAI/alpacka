@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Alpacka.Lib.Config;
+using Alpacka.Lib.Pack;
 
 namespace Alpacka.Lib.Instances
 {

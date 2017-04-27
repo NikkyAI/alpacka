@@ -1,6 +1,6 @@
 using System;
 
-namespace Alpacka.Lib.Config
+namespace Alpacka.Lib.Pack
 {
     [Flags]
     public enum Side

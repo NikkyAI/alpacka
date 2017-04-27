@@ -3,8 +3,8 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Alpacka.Lib.Config;
 using Alpacka.Lib.Mods;
+using Alpacka.Lib.Pack;
 
 namespace Alpacka.Lib.Curse
 {

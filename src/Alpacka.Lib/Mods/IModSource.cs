@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Alpacka.Lib.Config;
+using Alpacka.Lib.Pack;
 
 namespace Alpacka.Lib.Mods
 {

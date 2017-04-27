@@ -10,22 +10,34 @@ links:
 minecraftVersion: {{ MC_VERSION }}
 forgeVersion: recommended
 
+# These following defaults defined by default but are provided
+# as examples for how to define your own and what's available.
+# (You can remove this section if you don't modify anything.)
 defaults:
-  version: recommended # or latest
+  # Special group * applies to all included resources
+  mods:
+    path: "mods"
+    handler: curse
+    version: recommended # or latest
+  config:
+    path: "config"
+    handler: file
+  client: { side: client }
+  server: { side: server }
+  curse: { handler: curse }
+  github: { handler: github }
+  recommended: { version: recommended }
+  latest: { version: latest }
 
-mods:
+include:
   
-  - name: Sample Mod
-    description: This is a sample mod.
-    links:
-      website: http://sample.mod/
-      source: https://github.com/Ronald/SampleMod
-      issues: https://github.com/Ronald/SampleMod/issues
-      donations: https://patreon.com/Ronald
-    version: 0.1.0
-    # Only the src property is actually required.
-    src: https://github.com/ExampleSensei/SampleMod/releases/download/v0.1.0/SampleMod-0.1.0.jar
-    md5: 2ab96390c7dbe3439de74d0c9b0b1767 # Optional, used to verify.
-  
-  # Alternatively you can use this shorthand to define only the source.
-  - https://github.com/ExampleSensei/SampleLib/releases/download/v1.0.0/SampleLib-1.0.0.jar
+  mods:
+    common:
+      - https://github.com/ExampleSensei/SampleLib/releases/download/v1.0.0/SampleLib-1.0.0.jar
+    github:
+      - ExampleSensei/SampleMod @ 2.4.0
+    client:
+      - BetterShaders @ 1.0.1      # Use @ to select exactly which version to use ..
+      - Inventory Recipes @ latest # .. or latest / recommended to override the default.
+    server & github & optional & latest: # It's possible to combine defaults.
+      - ExampleSensei/AutomaticBackups

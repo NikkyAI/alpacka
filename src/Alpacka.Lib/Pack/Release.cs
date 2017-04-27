@@ -1,4 +1,4 @@
-namespace Alpacka.Lib.Config
+namespace Alpacka.Lib.Pack
 {
     public enum Release
     {
