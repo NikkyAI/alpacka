@@ -19,7 +19,7 @@ namespace Alpacka.CLI
             Description = "Minecraft modpack development with the power of Git";
             
             Commands.Add(new CommandInit());
-            // Commands.Add(new CommandBuild());
+            Commands.Add(new CommandBuild());
             // Commands.Add(new CommandRelease());
             // Commands.Add(new CommandInstall());
             // Commands.Add(new CommandUpdate());
