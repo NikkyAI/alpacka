@@ -5,12 +5,11 @@ using Microsoft.Extensions.CommandLineUtils;
 using Alpacka.Lib;
 using Alpacka.Lib.Mods;
 using Alpacka.Lib.Net;
-using Alpacka.Lib.Pack;
+using Alpacka.Lib.Pack.Config;
 using Alpacka.Lib.Utility;
 
 namespace Alpacka.CLI.Commands
 {
-    // TODO: Just a test command for now?
     public class CommandBuild : CommandLineApplication
     {
         public CommandBuild()

@@ -1,52 +1,18 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
 using System.Reflection;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
-using YamlDotNet.Serialization.NodeDeserializers;
-using Alpacka.Lib.Utility;
 
-namespace Alpacka.Lib.Pack
+namespace Alpacka.Lib.Pack.Config
 {
-    public class ModpackConfig : Modpack
+    public class EntryIncludes : List<EntryIncludes.Group>
     {
-        private static readonly Deserializer _deserializer =
-            new DeserializerBuilder()
-                .IgnoreUnmatchedProperties()
-                .WithNamingConvention(new CamelCaseNamingConvention())
-                .WithNodeDeserializer(inner => new ValidatingNodeDeserializer(inner),
-                                        s => s.InsteadOf<ObjectNodeDeserializer>())
-                .WithTypeConverter(new EntriesTypeConverter())
-                .Build();
-            
-        public EntryDefaults Defaults { get; set; }
-        
-        [Required]
-        public Entries Includes { get; set; }
-        
-        public static ModpackConfig LoadYAML(string path)
-        {
-            if (Directory.Exists(path))
-                path = Path.Combine(path, Constants.PACK_CONFIG_FILE);
-            
-            ModpackConfig config;
-            using (var reader = new StreamReader(File.OpenRead(path)))
-                config = _deserializer.Deserialize<ModpackConfig>(reader);
-            
-            return config;
-        }
-        
-        
-        
-        public class Entries : List<Group> {  }
-        
         public class Group : List<object>
         {
             public string FullName { get; }
+            
             public Group(string fullName)
                 { FullName = fullName; }
         }
@@ -54,19 +20,20 @@ namespace Alpacka.Lib.Pack
         public class Feature : Group
         {
             public string Type { get; set; }
+            
             public Feature(string type, string fullName)
                 : base(fullName) { Type = type; }
         }
         
         
-        public class EntriesTypeConverter : IYamlTypeConverter
+        public class TypeConverter : IYamlTypeConverter
         {
             public bool Accepts(Type type) =>
-                typeof(Entries).GetTypeInfo().IsAssignableFrom(type);
+                typeof(EntryIncludes).GetTypeInfo().IsAssignableFrom(type);
             
             public object ReadYaml(IParser parser, Type type)
             {
-                var entries = new Entries();
+                var entries = new EntryIncludes();
                 parser.Expect<MappingStart>();
                 while (parser.Current is Scalar) {
                     var fullName = parser.Expect<Scalar>().Value;
@@ -95,7 +62,8 @@ namespace Alpacka.Lib.Pack
                     }
                     parser.Expect<MappingEnd>();
                 } else if (parser.Current is SequenceStart) {
-                    var list = _deserializer.Deserialize<List<EntryResource>>(parser);
+                    var list = ModpackConfig.Deserializer
+                        .Deserialize<List<EntryResource>>(parser);
                     group = new Group(fullName);
                     group.AddRange(list);
                 } else throw new YamlException(parser.Current.Start, parser.Current.End,
@@ -103,7 +71,7 @@ namespace Alpacka.Lib.Pack
                 return group;
             }
             
-            // TODO: Implement EntriesTypeConverter.WriteYaml.
+            // TODO: Implement EntryIncludes.TypeConverter.WriteYaml.
             public void WriteYaml(IEmitter emitter, object value, Type type) =>
                 throw new NotImplementedException();
         }
