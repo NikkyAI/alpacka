@@ -46,8 +46,8 @@ namespace Alpacka.Lib.Pack
             return (atIndex < 0)
                 ? new EntryResource { Source = value }
                 : new EntryResource {
-                    Source  = value.Substring(0, atIndex),
-                    Version = value.Substring(atIndex - 1)
+                    Source  = value.Substring(0, atIndex).TrimEnd(),
+                    Version = value.Substring(atIndex + 1).TrimStart()
                 };
         }
     }
