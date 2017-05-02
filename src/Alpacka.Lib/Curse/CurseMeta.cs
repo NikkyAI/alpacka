@@ -30,8 +30,8 @@ namespace Alpacka.Lib.Curse
         
         private static async Task<Addon> GetAddonInternal(int addonId)
         {
-            Debug.WriteLine($"getAddon { addonId }", $"addon/{ addonId }.json"); // TODO: verbose logging
-            var jsonFile = await _downloader.Download($"{ URL_BASE }/addon/{ addonId }.json", $"addon/{ addonId }/project.json");
+            Debug.WriteLine($"getAddon { addonId }"); // TODO: verbose logging
+            var jsonFile = await _downloader.Download($"{ URL_BASE }/addon/{ addonId }/index.json", $"addon/{ addonId }/index.json");
             var json = File.ReadAllText(jsonFile.FullPath);
             return JsonConvert.DeserializeObject<Addon>(json, _settings);
         }
@@ -62,7 +62,7 @@ namespace Alpacka.Lib.Curse
         private static async Task<AddonFile[]> GetAddonFilesInternal(int addonId)
         {
             Debug.WriteLine($"getAddonFiles { addonId }"); // TODO: verbose logging
-            var jsonFile = await _downloader.Download($"{ URL_BASE }/addon/{ addonId }/files.json", $"addon/{ addonId }/files.json");
+            var jsonFile = await _downloader.Download($"{ URL_BASE }/addon/{ addonId }/files/index.json", $"addon/{ addonId }/files/index.json");
             var json = File.ReadAllText(jsonFile.FullPath);
             return JsonConvert.DeserializeObject<AddonFile[]>(json, _settings);
         }
@@ -78,7 +78,7 @@ namespace Alpacka.Lib.Curse
         private static async Task<AddonFile> GetAddonFileInternal(int addonId, int fileId) 
         {
             Debug.WriteLine($"getAddonFile { addonId } { fileId }"); // TODO: verbose logging
-            var jsonFile = await _downloader.Download($"{ URL_BASE }/addon/{ addonId }/{ fileId }.json", $"addon/{ addonId }/{ fileId }.json");
+            var jsonFile = await _downloader.Download($"{ URL_BASE }/addon/{ addonId }/files/{ fileId }.json", $"addon/{ addonId }/files/{ fileId }.json");
             var json = File.ReadAllText(jsonFile.FullPath);
             return JsonConvert.DeserializeObject<AddonFile>(json, _settings);
         }
@@ -94,7 +94,7 @@ namespace Alpacka.Lib.Curse
         private static async Task<string> GetAddonFileChangelogInternal(int addonId, int fileId) 
         {
             Debug.WriteLine($"getAddonFileChangelog { addonId } { fileId }"); // TODO: verbose logging
-            var htmlFile = await _downloader.Download($"{ URL_BASE }/addon/{ addonId }/{ fileId }.changelog.html");
+            var htmlFile = await _downloader.Download($"{ URL_BASE }/addon/{ addonId }/files/{ fileId }.changelog.html", $"addon/{ addonId }/files/{ fileId }.changelog.html");
             return File.ReadAllText(htmlFile.FullPath);
         }
     }
