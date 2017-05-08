@@ -46,15 +46,6 @@ namespace Alpacka.Lib.Net
             var modByName = new Dictionary<string, ResourceWrapper>();
             var modByID   = new Dictionary<string, ResourceWrapper>();
             
-            void FireDownloaderExceptionIfErrored(string message)
-            {
-                var errored = resources
-                    .Where(res => (res.Exception != null))
-                    .Select(res => Tuple.Create(res.Resource, res.Exception))
-                    .ToList();
-                if (errored.Count > 0) throw new DownloaderException(message, errored);
-            }
-            
             // TODO: Handle features.
             void ParseGroup(EntryIncludes.Group group, EntryDefaults.Group defaults)
             {
@@ -75,6 +66,7 @@ namespace Alpacka.Lib.Net
             
             foreach (var group in config.Includes)
                 ParseGroup(group, new EntryDefaults.Group());
+            FireDownloaderExceptionIfErrored(resources, "parsing mod sources");
             
             // Initialize used source handlers.
             await Task.WhenAll(resources
@@ -88,13 +80,14 @@ namespace Alpacka.Lib.Net
                 startIndex += count;
                 
                 await Task.WhenAll(range.Select(res => res.Resolve(config.MinecraftVersion, resources)));
-                FireDownloaderExceptionIfErrored("resolving mods");
-                await Task.WhenAll(range.Select(mod => mod.Download(_fileDownloader)));
-                FireDownloaderExceptionIfErrored("downloading mods");
-                await Task.WhenAll(range.Select(mod => mod.ExtractModInfo()));
-                FireDownloaderExceptionIfErrored("extracting mcmod.info");
+                FireDownloaderExceptionIfErrored(range, "resolving mods");
+                await Task.WhenAll(range.Select(res => res.Download(_fileDownloader)));
+                FireDownloaderExceptionIfErrored(range, "downloading mods");
+                await Task.WhenAll(range.Select(res => res.ExtractModInfo()));
+                FireDownloaderExceptionIfErrored(range, "extracting mcmod.info");
                 
                 foreach (var resource in range) {
+                    // GetComparableName and ModID return null for non-mods.
                     var name  = resource.GetComparableName();
                     var modID = resource.ModID;
                     var hasName  = !string.IsNullOrEmpty(name);
@@ -122,6 +115,16 @@ namespace Alpacka.Lib.Net
             // TODO: Features.
             
             return build;
+        }
+        
+        private void FireDownloaderExceptionIfErrored(
+            IEnumerable<ResourceWrapper> resources, string message)
+        {
+            var errored = resources
+                .Where(res => (res.Exception != null))
+                .Select(res => Tuple.Create(res.Resource, res.Exception))
+                .ToList();
+            if (errored.Count > 0) throw new DownloaderException(message, errored);
         }
         
         /// <summary> Downloads all mods from the specified ModpackBuild. </summary>
