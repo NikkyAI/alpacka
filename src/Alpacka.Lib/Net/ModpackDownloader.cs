@@ -43,8 +43,8 @@ namespace Alpacka.Lib.Net
                     .GetFullVersion();
             
             var resources = new List<ResourceWrapper>();
-            var byName  = new Dictionary<string, ResourceWrapper>();
-            var byModID = new Dictionary<string, ResourceWrapper>();
+            var modByName = new Dictionary<string, ResourceWrapper>();
+            var modByID   = new Dictionary<string, ResourceWrapper>();
             
             void FireDownloaderExceptionIfErrored(string message)
             {
@@ -97,13 +97,19 @@ namespace Alpacka.Lib.Net
                 foreach (var resource in range) {
                     var name  = resource.GetComparableName();
                     var modID = resource.ModID;
+                    var hasName  = !string.IsNullOrEmpty(name);
+                    var hasModID = (modID != null);
                     
                     // Remove any duplicate mods.
                     if (resource.IsDependency &&
-                        ((!string.IsNullOrEmpty(name) && byName.ContainsKey(name)) ||
-                         ((modID != null) && byModID.ContainsKey(modID))))
+                        ((hasName && modByName.ContainsKey(name)) ||
+                         (hasModID && modByID.ContainsKey(modID)))) {
+                        // TODO: If mod is already present, merge properties such as Side information.
                         resource.MarkAsRemoved();
-                    // TODO: If mod is already present, merge properties such as Side information.
+                    } else {
+                        if (hasName) modByName.Add(name, resource);
+                        if (hasModID) modByID.Add(modID, resource);
+                    }
                 }
             }
             
