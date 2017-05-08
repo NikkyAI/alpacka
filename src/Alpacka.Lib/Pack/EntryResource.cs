@@ -34,9 +34,11 @@ namespace Alpacka.Lib.Pack
         
         public virtual EntryResource Clone() =>
             new EntryResource {
-                Version = Version,
+                Handler = Handler,
                 Source  = Source,
                 MD5     = MD5,
+                Version = Version,
+                Path    = Path,
                 Side    = Side
             };
         
