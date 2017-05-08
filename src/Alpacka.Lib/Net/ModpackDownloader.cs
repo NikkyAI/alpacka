@@ -109,7 +109,9 @@ namespace Alpacka.Lib.Net
             
             var build = ModpackBuild.CopyFrom(config);
             build.ForgeVersion = forgeVersion;
-            build.Mods = resources.OfType<EntryMod>().ToList();
+            build.Mods = resources
+                .Select(wrapper => wrapper.Resource)
+                .OfType<EntryMod>().ToList();
             // TODO: Resources.
             // TODO: Features.
             
@@ -171,7 +173,7 @@ namespace Alpacka.Lib.Net
                     DownloadedFile = await fileDownloader.Download(Resource.Source);
                     // If the downloaded file is a .jar file and Resource is not yet an EntryMod, convert it.
                     if (!(Resource is EntryMod) && Path.GetExtension(DownloadedFile.FileName)
-                        .Equals("jar", StringComparison.OrdinalIgnoreCase))
+                        .Equals(".jar", StringComparison.OrdinalIgnoreCase))
                         Resource = EntryMod.Convert(Resource);
                 } catch (Exception ex) { Exception = ex; }
             }

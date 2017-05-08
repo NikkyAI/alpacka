@@ -73,7 +73,9 @@ namespace Alpacka.Lib.Curse
             }
             
             var fileInfo = await CurseMeta.GetAddonFile(addon.Id, fileId);
-            _modToAddonFile[mod] = fileInfo;
+            mod.Source = fileInfo.DownloadURL;
+            _modToAddonFile[mod] = fileInfo; // FIXME: Not used?
+            
             foreach (var dep in fileInfo.Dependencies) {
                 if (dep.Type == DependencyType.Required) {
                     var depAddon = await CurseMeta.GetAddon(dep.AddonId);
@@ -92,7 +94,8 @@ namespace Alpacka.Lib.Curse
                     Console.WriteLine($"'{ mod.Name }' recommends using '{ depAddon.Name }'");
                 }
             }
-            return fileInfo.DownloadURL;
+            
+            return mod;
         }
         
         public async Task<int> FindFileId(Addon addon, EntryMod mod, string mcVersion, bool optional)
