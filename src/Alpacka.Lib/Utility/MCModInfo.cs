@@ -6,7 +6,7 @@ using ICSharpCode.SharpZipLib.Zip;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace Alpacka.Lib.Mods
+namespace Alpacka.Lib.Utility
 {
     public class MCModInfo
     {

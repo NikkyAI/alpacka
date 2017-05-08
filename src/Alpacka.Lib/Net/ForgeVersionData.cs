@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
-using Alpacka.Lib.Config;
+using Alpacka.Lib.Pack;
 
 namespace Alpacka.Lib.Net
 {

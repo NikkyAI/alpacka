@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 
-namespace Alpacka.Lib.Config
+namespace Alpacka.Lib.Pack
 {
     /// <summary> Represents a alpacka modpack. Base class
     ///           for ModpackConfig and ModpackBuild. </summary>
@@ -17,9 +17,7 @@ namespace Alpacka.Lib.Config
         
         [Required]
         public string MinecraftVersion { get; set; }
-        public string ForgeVersion { get; set; }
-        
         [Required]
-        public List<EntryMod> Mods { get; set; }
+        public string ForgeVersion { get; set; }
     }
 }

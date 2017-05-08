@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
-using Alpacka.Lib.Config;
+using Alpacka.Lib.Pack;
 using Alpacka.Lib.Curse;
 using Alpacka.Lib.Net;
 using Alpacka.Lib.Utility;

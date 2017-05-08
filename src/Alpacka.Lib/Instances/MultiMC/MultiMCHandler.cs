@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using YamlDotNet.Serialization;
-using Alpacka.Lib.Config;
+using Alpacka.Lib.Pack;
 using Alpacka.Lib.Utility;
 
 namespace Alpacka.Lib.Instances.MultiMC
@@ -14,6 +14,7 @@ namespace Alpacka.Lib.Instances.MultiMC
         private readonly Config _config = Config.Load();
         
         public string Name => "MultiMC";
+        public Side Side => Side.Client;
         
         public MultiMCHandler()
         {

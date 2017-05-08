@@ -2,14 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using Alpacka.Lib.Config;
 using Alpacka.Lib.Net;
+using Alpacka.Lib.Pack;
 
 namespace Alpacka.Lib.Instances
 {
     public class ServerHandler : IInstanceHandler
     {
         public string Name => "Server";
+        public Side Side => Side.Server;
         
         public string GetInstancePath(string instanceName) =>
             Path.Combine(Directory.GetCurrentDirectory(), instanceName);
