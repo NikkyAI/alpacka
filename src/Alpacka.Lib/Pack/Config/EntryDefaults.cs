@@ -104,7 +104,7 @@ namespace Alpacka.Lib.Pack.Config
         } }
         
         public void Add(Group group) =>
-            _dict.Add(group.Name, group);
+            _dict[group.Name] = group;
         
         public bool Contains(Group group)
         {
