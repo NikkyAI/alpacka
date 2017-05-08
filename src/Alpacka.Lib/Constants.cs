@@ -5,8 +5,9 @@ namespace Alpacka.Lib
 {
     public static class Constants
     {
-        public static readonly string MC_MODS_DIR   = "mods";
-        public static readonly string MC_CONFIG_DIR = "config";
+        public static readonly string MC_DIR   = "minecraft";
+        public static readonly string MC_MODS_DIR   = Path.Combine(MC_DIR, "mods");
+        public static readonly string MC_CONFIG_DIR = Path.Combine(MC_DIR, "config");
         
         // TODO: Rename files to "alpacka.packxxx.yyy"?
         public static readonly string PACK_CONFIG_FILE = "packconfig.yaml";

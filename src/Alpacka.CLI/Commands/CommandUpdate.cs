@@ -218,7 +218,6 @@ namespace Alpacka.CLI.Commands
         {
             if (build == null) build = await GetBuild(directory);
             
-            var modsDir     = Path.Combine(directory, Constants.MC_MODS_DIR);
             var alpackaInfo = AlpackaInfo.Load(directory);
             Side side = Side.Both;
             
@@ -234,7 +233,7 @@ namespace Alpacka.CLI.Commands
             }
             
             Console.WriteLine("Downloading mods ...");
-            await DownloadFiles(build.Mods, side, modsDir);
+            await DownloadFiles(build.Mods, side, directory);
             
             return 0;
         }
@@ -249,11 +248,15 @@ namespace Alpacka.CLI.Commands
                 : await CommandBuild.Build(ModpackConfig.LoadYAML(directory));
         }
         
-        public static async Task DownloadFiles(List<EntryMod> modList, Side side, string mcDir) {
-            // TODO: Handle this without deleting the mods directory.
-            if (Directory.Exists(mcDir))
-                Directory.Delete(mcDir, true);
+        public static async Task DownloadFiles(List<EntryMod> modList, Side side, string directory) {
+            var mcDir = Path.Combine(directory, Constants.MC_DIR);
             Directory.CreateDirectory(mcDir);
+            
+            // TODO: Handle this without deleting the mods directory.
+            var modsDir = Path.Combine(directory, Constants.MC_MODS_DIR);
+            if (Directory.Exists(modsDir))
+                Directory.Delete(modsDir, true);
+            Directory.CreateDirectory(modsDir);
             
             var mods = modList.Where(mod => mod.Side == null || (mod.Side & side) == side).ToList(); 
             using (var fileCache = new FileCache(Path.Combine(Constants.CachePath, "mods")))
@@ -262,7 +265,9 @@ namespace Alpacka.CLI.Commands
                     var file = await downloader.Download(mod.Source);
                     if ((mod.MD5 != null) && (mod.MD5 != file.MD5))
                         throw new Exception($"MD5: '{ mod.MD5 }' does not match downloaded file's MD5: '{ file.MD5 }' { mod.Name }");
-                    File.Copy(file.FullPath, Path.Combine(mcDir, mod.Path));
+                    var path = Path.Combine(mcDir, mod.Path);
+                    Directory.CreateDirectory(Path.GetDirectoryName(path));
+                    File.Copy(file.FullPath, path);
                 }));
         }
     }
