@@ -49,7 +49,7 @@ namespace Alpacka.Lib.Net
             if (_disposed) return;
             _disposed = true;
             var files = _dict.Values
-                .Where(task => task.IsCompleted)
+                .Where(task => (task.Status == TaskStatus.RanToCompletion))
                 .Select(task => task.Result)
                 .ToArray();
             var str = JsonConvert.SerializeObject(files, _jsonSettings);
