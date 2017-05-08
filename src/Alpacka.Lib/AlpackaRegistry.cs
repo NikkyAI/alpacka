@@ -30,9 +30,8 @@ namespace Alpacka.Lib
                 = new Dictionary<string, IInstanceHandler>();
             
             public IInstanceHandler this[string name] { get {
-                IInstanceHandler value = null;
-                _handlers.TryGetValue(name.ToLowerInvariant(), out value);
-                return value;
+                IInstanceHandler value;
+                return (_handlers.TryGetValue(name.ToLowerInvariant(), out value)) ? value : null;
             } }
             
             internal InstanceHandlerCollection() {  }
@@ -52,9 +51,9 @@ namespace Alpacka.Lib
                 = new Dictionary<string, IResourceHandler>();
             
             public IResourceHandler this[string name] { get {
-                IResourceHandler value = null;
-                _handlers.TryGetValue(name.ToLowerInvariant(), out value);
-                return value;
+                IResourceHandler value;
+                return ((name != null) && _handlers.TryGetValue(
+                    name.ToLowerInvariant(), out value)) ? value : null;
             } }
             
             internal ResourceHandlerCollection() {  }
