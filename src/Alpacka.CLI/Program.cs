@@ -20,9 +20,9 @@ namespace Alpacka.CLI
             
             Commands.Add(new CommandInit());
             Commands.Add(new CommandBuild());
-            // Commands.Add(new CommandRelease());
-            // Commands.Add(new CommandInstall());
-            // Commands.Add(new CommandUpdate());
+            Commands.Add(new CommandRelease());
+            Commands.Add(new CommandInstall());
+            Commands.Add(new CommandUpdate());
             
             VersionOption("-v | --version", Version);
             HelpOption("-? | -h | --help");

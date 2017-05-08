@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
@@ -12,17 +13,34 @@ namespace Alpacka.Lib.Pack.Config
         public class Group : List<object>
         {
             public string FullName { get; }
+            public List<string> Names { get; }
             
             public Group(string fullName)
-                { FullName = fullName; }
+            {
+                FullName = fullName;
+                Names = !string.IsNullOrEmpty(fullName)
+                    ? fullName.Split('&').Select(name => name.Trim()).ToList()
+                    : new List<string>();
+            }
         }
         
         public class Feature : Group
         {
-            public string Type { get; set; }
+            public string Type { get; }
+            public string Name { get; }
             
+            private static int ampersandIndex;
             public Feature(string type, string fullName)
-                : base(fullName) { Type = type; }
+                : base(SkipFirstName(fullName))
+            {
+                Type = type;
+                Name = fullName.Substring(0, ampersandIndex).TrimEnd();
+            }
+            
+            private static string SkipFirstName(string fullName) =>
+                ((ampersandIndex = fullName?.IndexOf('&') ?? -1) >= 0)
+                    ? fullName.Substring(ampersandIndex + 1).TrimStart()
+                    : null;
         }
         
         

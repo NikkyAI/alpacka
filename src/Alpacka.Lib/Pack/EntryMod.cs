@@ -16,5 +16,13 @@ namespace Alpacka.Lib.Pack
                 MD5     = MD5,
                 Side    = Side,
             };
+        
+        public static EntryMod Convert(EntryResource resource) =>
+            (resource as EntryMod) ?? new EntryMod {
+                Version = resource.Version,
+                Source  = resource.Source,
+                MD5     = resource.MD5,
+                Side    = resource.Side
+            };
     }
 }

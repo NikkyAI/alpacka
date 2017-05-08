@@ -17,6 +17,7 @@ namespace Alpacka.Lib.Pack
         
         [Required]
         public string MinecraftVersion { get; set; }
+        [Required]
         public string ForgeVersion { get; set; }
     }
 }

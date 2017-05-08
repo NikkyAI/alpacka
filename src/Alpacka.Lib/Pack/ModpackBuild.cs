@@ -10,6 +10,8 @@ namespace Alpacka.Lib.Pack
     {
         public string PackVersion { get; set; }
         
+        public List<EntryMod> Mods { get; set; }
+        
         public ModpackBuild() {  }
         
         public static ModpackBuild CopyFrom(Modpack pack)

@@ -55,6 +55,14 @@ namespace Alpacka.Lib.Pack.Config
             /// <summary> Side of contained resources. If not Both,
             ///           they will be only be available on this side. </summary>
             public Side? Side { get; set; }
+            
+            
+            public static Group operator +(Group left, Group right) => new Group {
+                Handler = right?.Handler ?? left?.Handler,
+                Version = right?.Version ?? left?.Version,
+                Path    = right?.Path ?? left?.Path,
+                Side    = right?.Side ?? left?.Side
+            };
         }
         
         
@@ -89,6 +97,11 @@ namespace Alpacka.Lib.Pack.Config
         
         public int Count => _dict.Count;
         bool ICollection<Group>.IsReadOnly => false;
+        
+        public Group this[string name] { get {
+            Group group;
+            return (_dict.TryGetValue(name, out group) ? group : null);
+        } }
         
         public void Add(Group group) =>
             _dict.Add(group.Name, group);

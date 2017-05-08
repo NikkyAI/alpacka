@@ -3,12 +3,12 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Alpacka.Lib.Mods;
 using Alpacka.Lib.Pack;
+using Alpacka.Lib.Resources;
 
 namespace Alpacka.Lib.Curse
 {
-    public class ModSourceCurse : IModSource
+    public class ResourceHandlerCurse : IResourceHandler
     {
         // TODO: Don't use concurrent dictionary - in general this could likely be done better.
         private static readonly ConcurrentDictionary<EntryMod, AddonFile> _modToAddonFile =
@@ -18,37 +18,44 @@ namespace Alpacka.Lib.Curse
             
         private ProjectList _allProjects;
         
-        public bool CanHandle(string source) =>
-            (source.StartsWith("curse:") || !source.Contains(":"));
+        public string Name => "Curse";
         
         public async Task Initialize()
         {
             _allProjects = await ProjectFeed.Get();
         }
         
-        public async Task<string> Resolve(EntryMod mod, string mcVersion, Action<EntryMod> addDependency)
+        public bool ShouldOverwriteHandler(string source) => false;
+        
+        public async Task<EntryResource> Resolve(EntryResource resource, string mcVersion,
+                                                 Action<EntryResource> addDependency)
         {
-            var id = -1;
-            var splitSource = mod.Source.Split(new char[]{ ':' }, 2);
-            var source = splitSource[splitSource.Length-1].Trim();
-            var scheme = (splitSource.Length > 1) ? splitSource[0] : "";
+            var mod = EntryMod.Convert(resource);
             
             DependencyType type;
             if (!_modToDependencyType.TryGetValue(mod, out type))
                 type = DependencyType.Required;
             var optional = (type == DependencyType.Optional);
             
-            Addon addon;
-            if (!int.TryParse(source, out id)) {
-                addon = _allProjects.Data.Find(a => string.Equals(a.Name.Trim(), source, StringComparison.OrdinalIgnoreCase));
-                if (addon == null)
-                    throw new Exception($"No Project of name '{ source }' found");
+            var id = -1;
+            // If Source contains an ID, use it.
+            if (int.TryParse(mod.Source, out id))
+                Debug.WriteLine($"get full Addon info for id: { mod.Source }");
+            // Otherwise try to find an addon with Source as its name.
+            else {
+                // Use AllProjects data to find the addon, which doesn't contain all
+                // the necessary information so only the ID is interesting to us.
+                var addonForId = _allProjects.Data.Find(a => a.Name.Trim().Equals(mod.Source, StringComparison.OrdinalIgnoreCase));
+                // TODO: Finding in a large list is pretty slow. Use a Dictionary?
+                if (addonForId == null) throw new Exception(
+                    $"No Project of name '{ mod.Source }' found");
                 // Debug.WriteLine(_Addon.ToPrettyJson());
-                id = addon.Id;
-                Debug.WriteLine($"get full Addon info for { addon.Name }");
-            } else Debug.WriteLine($"get full Addon info for id: { source }");
+                id = addonForId.Id;
+                Debug.WriteLine($"get full Addon info for { addonForId.Name }");
+            }
             
-            addon = await CurseMeta.GetAddon(id);
+            var addon = await CurseMeta.GetAddon(id);
+            
             mod.Name        = mod.Name ?? addon.Name;
             mod.Description = mod.Description ?? addon.Summary;
             if (mod.Links == null) mod.Links = new EntryLinks();

@@ -50,5 +50,7 @@ namespace Alpacka.Lib.Pack
                     Version = value.Substring(atIndex + 1).TrimStart()
                 };
         }
+        
+        public override string ToString() => Source;
     }
 }

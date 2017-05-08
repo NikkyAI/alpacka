@@ -4,14 +4,14 @@ using System.Linq;
 using Alpacka.Lib.Curse;
 using Alpacka.Lib.Instances;
 using Alpacka.Lib.Instances.MultiMC;
-using Alpacka.Lib.Mods;
+using Alpacka.Lib.Resources;
 
 namespace Alpacka.Lib
 {
     public static class AlpackaRegistry
     {
         public static InstanceHandlerCollection InstanceHandlers { get; }
-        public static SourceHandlerCollection SourceHandlers { get; }
+        public static ResourceHandlerCollection ResourceHandlers { get; }
         
         static AlpackaRegistry()
         {
@@ -19,9 +19,9 @@ namespace Alpacka.Lib
             InstanceHandlers.Register(new ServerHandler());
             InstanceHandlers.Register(new MultiMCHandler());
             
-            SourceHandlers = new SourceHandlerCollection();
-            SourceHandlers.Register(new ModSourceURL());
-            SourceHandlers.Register(new ModSourceCurse());
+            ResourceHandlers = new ResourceHandlerCollection();
+            ResourceHandlers.Register(new ResourceHandlerURL());
+            ResourceHandlers.Register(new ResourceHandlerCurse());
         }
         
         public class InstanceHandlerCollection : IEnumerable<IInstanceHandler>
@@ -46,21 +46,25 @@ namespace Alpacka.Lib
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
         
-        public class SourceHandlerCollection : IEnumerable<IModSource>
+        public class ResourceHandlerCollection : IEnumerable<IResourceHandler>
         {
-            private readonly List<IModSource> _handlers = new List<IModSource>();
+            private readonly Dictionary<string, IResourceHandler> _handlers
+                = new Dictionary<string, IResourceHandler>();
             
-            internal SourceHandlerCollection() {  }
+            public IResourceHandler this[string name] { get {
+                IResourceHandler value = null;
+                _handlers.TryGetValue(name.ToLowerInvariant(), out value);
+                return value;
+            } }
             
-            public void Register(IModSource handler) =>
-                _handlers.Add(handler);
+            internal ResourceHandlerCollection() {  }
             
-            public IModSource Find(string modSource) =>
-                _handlers.First(handler => handler.CanHandle(modSource));
+            public void Register(IResourceHandler handler) =>
+                _handlers.Add(handler.Name.ToLowerInvariant(), handler);
             
             // IEnumerable implementation
             
-            public IEnumerator<IModSource> GetEnumerator() => _handlers.GetEnumerator();
+            public IEnumerator<IResourceHandler> GetEnumerator() => _handlers.Values.GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
     }
