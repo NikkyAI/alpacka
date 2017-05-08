@@ -29,7 +29,7 @@ defaults:
   recommended: { version: recommended }
   latest: { version: latest }
 
-include:
+includes:
   
   mods:
     common:

@@ -183,7 +183,10 @@ namespace Alpacka.Lib.Net
                     // If the downloaded file is a .jar file and Resource is not yet an EntryMod, convert it.
                     if (!(Resource is EntryMod) && Path.GetExtension(DownloadedFile.FileName)
                         .Equals(".jar", StringComparison.OrdinalIgnoreCase))
-                        Resource = EntryMod.Convert(Resource);
+                        {
+                            Resource = EntryMod.Convert(Resource);
+                            Resource.Path = Path.Combine(Resource.Path, DownloadedFile.FileName);
+                        }
                 } catch (Exception ex) { Exception = ex; }
             }
             

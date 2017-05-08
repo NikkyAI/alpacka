@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Alpacka.Lib.Pack;
@@ -11,8 +12,6 @@ namespace Alpacka.Lib.Curse
     public class ResourceHandlerCurse : IResourceHandler
     {
         // TODO: Don't use concurrent dictionary - in general this could likely be done better.
-        private static readonly ConcurrentDictionary<EntryMod, AddonFile> _modToAddonFile =
-            new ConcurrentDictionary<EntryMod, AddonFile>();
         private static readonly ConcurrentDictionary<EntryMod, DependencyType> _modToDependencyType =
             new ConcurrentDictionary<EntryMod, DependencyType>();
             
@@ -63,6 +62,7 @@ namespace Alpacka.Lib.Curse
             mod.Links.Source    = mod.Links.Source ?? addon.ExternalUrl;
             mod.Links.Donations = mod.Links.Donations ?? addon.DonationUrl;
             
+            
             var fileId = await FindFileId(addon, mod, mcVersion, optional);
             if (fileId == -1) {
                 if (optional) {
@@ -74,7 +74,7 @@ namespace Alpacka.Lib.Curse
             
             var fileInfo = await CurseMeta.GetAddonFile(addon.Id, fileId);
             mod.Source = fileInfo.DownloadURL;
-            _modToAddonFile[mod] = fileInfo; // FIXME: Not used?
+            mod.Path  = Path.Combine(mod.Path, fileInfo.FileNameOnDisk);
             
             foreach (var dep in fileInfo.Dependencies) {
                 if (dep.Type == DependencyType.Required) {
