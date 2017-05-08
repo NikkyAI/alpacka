@@ -69,7 +69,7 @@ namespace Alpacka.Lib.Pack.Config
         public class TypeConverter : IYamlTypeConverter
         {
             public bool Accepts(Type type) =>
-                typeof(EntryIncludes).GetTypeInfo().IsAssignableFrom(type);
+                typeof(EntryDefaults).GetTypeInfo().IsAssignableFrom(type);
             
             public object ReadYaml(IParser parser, Type type)
             {
