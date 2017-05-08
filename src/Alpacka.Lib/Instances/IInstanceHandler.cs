@@ -8,6 +8,8 @@ namespace Alpacka.Lib.Instances
         /// <summary> Gets a unique name for this instance type. </summary>
         string Name { get; }
         
+        Side Side { get; }
+        
         /// <summary> Gets the full path of an instance for this type with
         ///           the specified simplified (safe) instance / folder name. </summary>
         string GetInstancePath(string instanceName);

@@ -12,6 +12,7 @@ using Alpacka.Lib;
 using Alpacka.Lib.Net;
 using Alpacka.Lib.Pack;
 using Alpacka.Lib.Pack.Config;
+using Alpacka.Lib.Utility;
 
 namespace Alpacka.CLI.Commands
 {
@@ -149,11 +150,24 @@ namespace Alpacka.CLI.Commands
                             // switch to branch
                             Console.WriteLine($"switching to branch '{argVersion.Value}'");
                             var newBranch = repo.Branches[argVersion.Value];
-                            if(newBranch == null) {
+                            if (newBranch == null) {
                                 Console.WriteLine($"ERROR: cannot find branch '{argVersion.Value}'");
                                 return 1;
                             }
-                            LibGit2Sharp.Commands.Checkout(repo, newBranch/*, new CheckoutOptions{ CheckoutModifiers = CheckoutModifiers.Force }*/);
+                            if (newBranch.IsRemote) {
+                                Console.WriteLine("is remote");
+                                var name = argVersion.Value.Split('/')[1];
+                                Console.WriteLine(name);
+                                var trackingBranch = repo.CreateBranch(name, newBranch.Tip);
+                                LibGit2Sharp.Commands.Checkout(repo, trackingBranch);
+                                LibGit2Sharp.Repository.ListRemoteReferences("");
+                            }
+                            if (newBranch.IsTracking) {
+                                Console.WriteLine("is tracking");
+                                LibGit2Sharp.Commands.Checkout(repo, newBranch /*, new CheckoutOptions { CheckoutModifiers = CheckoutModifiers.Force }*/ );
+                                
+                            }
+                            
                             // var remoteBranch = newBranch.TrackedBranch;
                             // //reset to tip of remote
                             // repo.Reset(ResetMode.Mixed, remoteBranch.Tip);
@@ -176,14 +190,16 @@ namespace Alpacka.CLI.Commands
                     return new { Tag = t, Version = v };
                 }).OrderByDescending( a => a.Version);
                 
-                
                 var tip = repo.Head.Tip;
                 Debug.WriteLine($"Tip: { repo.Head.FriendlyName } { tip.MessageShort } { tip }");
                 Console.WriteLine("Branches:");
-                foreach(Branch b in repo.Branches.Where(b => !b.IsRemote))
+                foreach(Branch b in repo.Branches)//.Where(b => !b.IsRemote))
                 {
                     var prefix = b.IsCurrentRepositoryHead ? "*" : " ";
-                    Console.WriteLine($"{ prefix } { b.FriendlyName } -> { b.TrackedBranch?.FriendlyName ?? "(none)" }");
+                    if (b.TrackedBranch?.FriendlyName != null)
+                        Console.WriteLine($"{ prefix } { b.FriendlyName } -> { b.TrackedBranch?.FriendlyName }");
+                    else
+                        Console.WriteLine($"{ prefix } { b.FriendlyName }");
                 }
                 Console.WriteLine("Releases:");
                 foreach (var t in allTagVersions)
@@ -204,6 +220,7 @@ namespace Alpacka.CLI.Commands
             
             var modsDir     = Path.Combine(directory, Constants.MC_MODS_DIR);
             var alpackaInfo = AlpackaInfo.Load(directory);
+            Side side = Side.Both;
             
             if (alpackaInfo != null) {
                 var instanceHandler = AlpackaRegistry.InstanceHandlers[alpackaInfo.InstanceType];
@@ -213,10 +230,11 @@ namespace Alpacka.CLI.Commands
                 }
             
                 instanceHandler.Update(directory, null, build); // FIXME: oldPack?
+                side = instanceHandler.Side;
             }
             
             Console.WriteLine("Downloading mods ...");
-            await DownloadMods(build.Mods, Side.Client, modsDir);
+            await DownloadMods(build.Mods, side, modsDir);
             
             return 0;
         }
@@ -237,7 +255,7 @@ namespace Alpacka.CLI.Commands
                 Directory.Delete(modsDir, true);
             Directory.CreateDirectory(modsDir);
             
-            var mods = modList.Where(mod => (mod.Side & side) == side).ToList(); 
+            var mods = modList.Where(mod => mod.Side == null || (mod.Side & side) == side).ToList(); 
             using (var fileCache = new FileCache(Path.Combine(Constants.CachePath, "mods")))
             using (var downloader = new FileDownloaderURL(fileCache))
                 await Task.WhenAll(mods.Select(async mod => {

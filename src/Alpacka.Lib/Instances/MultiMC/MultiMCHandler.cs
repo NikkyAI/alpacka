@@ -14,6 +14,7 @@ namespace Alpacka.Lib.Instances.MultiMC
         private readonly Config _config = Config.Load();
         
         public string Name => "MultiMC";
+        public Side Side => Side.Client;
         
         public MultiMCHandler()
         {

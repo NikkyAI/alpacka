@@ -10,6 +10,7 @@ namespace Alpacka.Lib.Instances
     public class ServerHandler : IInstanceHandler
     {
         public string Name => "Server";
+        public Side Side => Side.Server;
         
         public string GetInstancePath(string instanceName) =>
             Path.Combine(Directory.GetCurrentDirectory(), instanceName);
