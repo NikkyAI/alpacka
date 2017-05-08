@@ -83,7 +83,9 @@ namespace Alpacka.Lib.Net
             
             var startIndex = 0;
             while (startIndex < resources.Count) {
-                var range = Enumerable.Range(startIndex, resources.Count - startIndex).Select(i => resources[i]);
+                var count = resources.Count - startIndex;
+                var range = Enumerable.Range(startIndex, count).Select(i => resources[i]);
+                startIndex += count;
                 
                 await Task.WhenAll(range.Select(res => res.Resolve(config.MinecraftVersion, resources)));
                 FireDownloaderExceptionIfErrored("resolving mods");
@@ -150,13 +152,16 @@ namespace Alpacka.Lib.Net
                 Handler = AlpackaRegistry.ResourceHandlers.FirstOrDefault(
                         handler => handler.ShouldOverwriteHandler(Resource.Source))
                     ?? AlpackaRegistry.ResourceHandlers[Resource.Handler];
+                if (Handler == null) Exception = new Exception("No handler found");
             }
             
             public async Task Resolve(string mcVersion, List<ResourceWrapper> resources)
             {
-                try { Resource = await Handler.Resolve(Resource, mcVersion, (dependency) => {
-                    lock (resources) { resources.Add(new ResourceWrapper(dependency)); } }); }
-                catch (Exception ex) { Exception = ex; }
+                try {
+                    Resource = await Handler.Resolve(Resource, mcVersion, (dependency) => {
+                        lock (resources) { resources.Add(new ResourceWrapper(dependency)); } });
+                    Resource.Handler = null;
+                } catch (Exception ex) { Exception = ex; }
             }
             
             public async Task Download(IFileDownloader fileDownloader)
@@ -210,8 +215,13 @@ namespace Alpacka.Lib.Net
                 return (name.Length > 0) ? name : mod.Name;
             }
             
-            public override string ToString() =>
-                ((Resource as EntryMod)?.Name ?? Resource.Source);
+            public override string ToString()
+            {
+                var mod = (Resource as EntryMod);
+                return !string.IsNullOrEmpty(mod?.Name)
+                    ? $"{ mod.Name } (Source: '{ mod.Source }')"
+                    : $"'{ Resource.Source }'";
+            }
         }
     }
     
