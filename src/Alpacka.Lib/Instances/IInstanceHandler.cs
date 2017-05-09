@@ -16,7 +16,7 @@ namespace Alpacka.Lib.Instances
         
         /// <summary> Gets the full path of an instance for this type with
         ///           the specified simplified (safe) instance / folder name. </summary>
-        string GetInstancePath(string instanceName, string basedir);
+        string GetInstancePath(string instanceName, string baseDir);
         
         /// <summary> Returns the list of instance paths that are installed
         ///           for this instance type. Returns null if not supported. </summary>

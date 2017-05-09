@@ -36,8 +36,8 @@ namespace Alpacka.CLI.Commands
                     Console.WriteLine($"ERROR: No handler for type '{ argType.Value }'");
                     return 1;
                 }
-                var basedir = argDirectory.Value ?? Directory.GetCurrentDirectory();
-                var instancePath = instanceHandler.GetInstancePath(argName.Value, basedir);
+                var baseDir = argDirectory.Value ?? Directory.GetCurrentDirectory();
+                var instancePath = instanceHandler.GetInstancePath(argName.Value, baseDir);
                 
                 var configPathFile = Path.Combine(instancePath, Constants.PACK_CONFIG_FILE);
                 
@@ -46,7 +46,7 @@ namespace Alpacka.CLI.Commands
                     Console.WriteLine($"ERROR: { Constants.PACK_CONFIG_FILE } already exists in the target directory.");
                     return 1;
                 }
-
+                
                 // TODO: Move this to a utility method. (In Alpacka.Lib?)
                 var resourceStream = GetType().GetTypeInfo().Assembly
                     .GetManifestResourceStream("Alpacka.CLI.Resources.packconfig.default.yaml");
@@ -82,7 +82,7 @@ namespace Alpacka.CLI.Commands
                 File.WriteAllText(configPathFile, defaultConfig);
                 
                 Console.WriteLine($"Created stub alpacka pack in { Path.GetFullPath(instancePath) }");
-                Console.WriteLine($"adjust config and run 'alpacka update'");
+                Console.WriteLine($"Edit { Constants.PACK_CONFIG_FILE } and run 'alpacka update'");
                 
                 return 0;
             });
