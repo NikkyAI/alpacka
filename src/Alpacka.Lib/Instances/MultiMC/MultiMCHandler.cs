@@ -23,9 +23,6 @@ namespace Alpacka.Lib.Instances.MultiMC
             // TODO: Verify that the specified path actually contains MultiMC?
         }
         
-        public string GetInstancePath(string instanceName) =>
-            Path.Combine(_config.InstancesPath, instanceName);
-        
         public string GetInstancePath(string instanceName, string baseDir) =>
             Path.Combine(_config.InstancesPath, instanceName);
         
