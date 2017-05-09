@@ -20,13 +20,6 @@ namespace Alpacka.CLI.Commands
                 "The type of instance can be 'Vanilla', 'Server' or 'MultiMC'");
             var argName = Argument("name",
                 "The name of the pack");
-            var argDirectory = Argument("[directory]",
-                "The directory to initialize the pack in. Created if necessary.");
-            
-            var optDescription = Option("-d | --description",
-                "Sets the pack description", CommandOptionType.SingleValue);
-            var optAuthors = Option("-a | --authors",
-                "Sets the pack author(s)", CommandOptionType.MultipleValue);
             
             HelpOption("-? | -h | --help");
             
@@ -36,8 +29,7 @@ namespace Alpacka.CLI.Commands
                     Console.WriteLine($"ERROR: No handler for type '{ argType.Value }'");
                     return 1;
                 }
-                var baseDir = argDirectory.Value ?? Directory.GetCurrentDirectory();
-                var instancePath = instanceHandler.GetInstancePath(argName.Value, baseDir);
+                var instancePath = instanceHandler.GetInstancePath(argName.Value, Directory.GetCurrentDirectory());
                 
                 var configPathFile = Path.Combine(instancePath, Constants.PACK_CONFIG_FILE);
                 
@@ -55,10 +47,7 @@ namespace Alpacka.CLI.Commands
                     defaultConfig = reader.ReadToEnd();
                 
                 var packName = argName.Value;
-                var packDesc = optDescription.Value() ?? "...";
-                var authors = optAuthors.HasValue()
-                    ? string.Join(", ", optAuthors.Values)
-                    : Environment.GetEnvironmentVariable("USERNAME") ?? "...";
+                var authors = Environment.GetEnvironmentVariable("USERNAME") ?? "...";
                 
                 var forgeData    = ForgeVersionData.Download().Result;
                 var mcVersion    = forgeData.GetRecentMCVersion(Release.Recommended);
@@ -67,7 +56,6 @@ namespace Alpacka.CLI.Commands
                 defaultConfig = Regex.Replace(defaultConfig, "{{(.+)}}", match => {
                     switch (match.Groups[1].Value.Trim()) {
                         case "NAME": return packName;
-                        case "DESCRIPTION": return packDesc;
                         case "AUTHORS": return authors;
                         case "MC_VERSION": return mcVersion;
                         case "FORGE_VERSION": return forgeVersion;
