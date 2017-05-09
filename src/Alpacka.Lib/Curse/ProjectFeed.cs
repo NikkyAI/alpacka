@@ -19,7 +19,7 @@ namespace Alpacka.Lib.Curse
             var cache = Path.Combine(Constants.CachePath, "curse");
             Debug.WriteLine($"cache: { cache }");
             
-            using (var fileCache = new FileCache(Path.Combine(Constants.CachePath, "cursemeta")))
+            using (var fileCache = new FileCache(Path.Combine(Constants.CachePath, "cursefeed")))
             using (var downloader = new FileDownloaderURL(fileCache))
             {
                 Console.WriteLine("Downloading cursemeta project data. This could take a while.");
