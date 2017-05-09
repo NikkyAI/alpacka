@@ -16,21 +16,22 @@ namespace Alpacka.CLI.Commands
             Name = "init";
             Description = "Create and initialize a new alpacka pack";
             
-            var argDirectory = Argument("[directory]",
-                "The directory to initialize the pack in. Created if necessary.");
-            
-            var optName = Option("-n | --name",
-                "Sets the pack name", CommandOptionType.SingleValue);
-            var optDescription = Option("-d | --description",
-                "Sets the pack description", CommandOptionType.SingleValue);
-            var optAuthors = Option("-a | --authors",
-                "Sets the pack author(s)", CommandOptionType.MultipleValue);
+            var argType = Argument("type",
+                "The type of instance can be 'Vanilla', 'Server' or 'MultiMC'");
+            var argName = Argument("name",
+                "The name of the pack");
             
             HelpOption("-? | -h | --help");
             
             OnExecute(() => {
-                var directory      = argDirectory.Value ?? ".";
-                var configPathFile = Path.Combine(directory, Constants.PACK_CONFIG_FILE);
+                var instanceHandler = AlpackaRegistry.InstanceHandlers[argType.Value];
+                if (instanceHandler == null) {
+                    Console.WriteLine($"ERROR: No handler for type '{ argType.Value }'");
+                    return 1;
+                }
+                var instancePath = instanceHandler.GetInstancePath(argName.Value, Directory.GetCurrentDirectory());
+                
+                var configPathFile = Path.Combine(instancePath, Constants.PACK_CONFIG_FILE);
                 
                 if (File.Exists(configPathFile)) {
                     // TODO: We really need that logging stuffs.
@@ -38,8 +39,6 @@ namespace Alpacka.CLI.Commands
                     return 1;
                 }
                 
-                Directory.CreateDirectory(directory);
-
                 // TODO: Move this to a utility method. (In Alpacka.Lib?)
                 var resourceStream = GetType().GetTypeInfo().Assembly
                     .GetManifestResourceStream("Alpacka.CLI.Resources.packconfig.default.yaml");
@@ -47,15 +46,8 @@ namespace Alpacka.CLI.Commands
                 using (var reader = new StreamReader(resourceStream))
                     defaultConfig = reader.ReadToEnd();
                 
-                var packName = optName.Value() ??
-                    // If dictionary argument is set and it doesn't
-                    // contain path separators, use it as pack name.
-                    ((argDirectory.Value?.IndexOfAny(@"/\".ToCharArray()) == -1)
-                        ? argDirectory.Value : "...");
-                var packDesc = optDescription.Value() ?? "...";
-                var authors = optAuthors.HasValue()
-                    ? string.Join(", ", optAuthors.Values)
-                    : Environment.GetEnvironmentVariable("USERNAME") ?? "...";
+                var packName = argName.Value;
+                var authors = Environment.GetEnvironmentVariable("USERNAME") ?? "...";
                 
                 var forgeData    = ForgeVersionData.Download().Result;
                 var mcVersion    = forgeData.GetRecentMCVersion(Release.Recommended);
@@ -64,7 +56,6 @@ namespace Alpacka.CLI.Commands
                 defaultConfig = Regex.Replace(defaultConfig, "{{(.+)}}", match => {
                     switch (match.Groups[1].Value.Trim()) {
                         case "NAME": return packName;
-                        case "DESCRIPTION": return packDesc;
                         case "AUTHORS": return authors;
                         case "MC_VERSION": return mcVersion;
                         case "FORGE_VERSION": return forgeVersion;
@@ -72,9 +63,14 @@ namespace Alpacka.CLI.Commands
                     }
                 });
                 
+                Directory.CreateDirectory(instancePath);
+                
+                var info = new AlpackaInfo { InstanceType = instanceHandler.Name };
+                    info.Save(instancePath);
                 File.WriteAllText(configPathFile, defaultConfig);
                 
-                Console.WriteLine($"Created stub alpacka pack in { Path.GetFullPath(directory) }");
+                Console.WriteLine($"Created stub alpacka pack in { Path.GetFullPath(instancePath) }");
+                Console.WriteLine($"Edit { Constants.PACK_CONFIG_FILE } and run 'alpacka update'");
                 
                 return 0;
             });

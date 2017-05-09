@@ -23,21 +23,18 @@ namespace Alpacka.Lib.Instances.MultiMC
             // TODO: Verify that the specified path actually contains MultiMC?
         }
         
-        public string GetInstancePath(string instanceName) =>
-            // TODO: Custom instances folder? Is this possible?
-            Path.Combine(_config.InstancesPath, instanceName, "minecraft");
+        public string GetInstancePath(string instanceName, string baseDir) =>
+            Path.Combine(_config.InstancesPath, instanceName);
         
         public List<string> GetInstances() =>
             Directory.EnumerateDirectories(_config.InstancesPath)
-                .Select(dir => Path.Combine(dir, "minecraft"))
-                .Where(Directory.Exists) // FIXME: Only include alpacka instances.
+                .Where(dir => File.Exists(Path.Combine(dir, Constants.PACK_CONFIG_FILE))) // Only include alpacka instances.
                 .ToList();
         
         
         public void Install(string instancePath, ModpackBuild pack)
         {
-            var multiMCInstancePath = Path.GetDirectoryName(instancePath);
-            var multiMCInstanceCfg = Path.Combine(multiMCInstancePath, CONFIG_FILE);
+            var multiMCInstanceCfg = Path.Combine(instancePath, CONFIG_FILE);
             
             var cfg = new MultiMCConfig(multiMCInstanceCfg);
             cfg.Config["name"] = pack.Name;
@@ -53,8 +50,7 @@ namespace Alpacka.Lib.Instances.MultiMC
         
         public void Update(string instancePath, ModpackBuild oldPack, ModpackBuild newPack)
         {
-            var multiMCInstancePath = Path.GetDirectoryName(instancePath);
-            var multiMCInstanceCfg = Path.Combine(multiMCInstancePath, CONFIG_FILE);
+            var multiMCInstanceCfg = Path.Combine(instancePath, CONFIG_FILE);
             
             // update minecraft and forge version
             var cfg = new MultiMCConfig(multiMCInstanceCfg);
@@ -63,11 +59,8 @@ namespace Alpacka.Lib.Instances.MultiMC
             cfg.Save();
         }
         
-        public void Remove(string instancePath)
-        {
-            var multiMCInstancePath = Directory.GetParent(instancePath).FullName;
-            Directory.Delete(multiMCInstancePath, true);
-        }
+        public void Remove(string instancePath) => 
+            Directory.Delete(instancePath, true);
         
         
         public class Config : UserConfig

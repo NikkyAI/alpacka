@@ -11,9 +11,9 @@ namespace Alpacka.Lib.Instances
     {
         public string Name => "Server";
         public Side Side => Side.Server;
-        
-        public string GetInstancePath(string instanceName) =>
-            Path.Combine(Directory.GetCurrentDirectory(), instanceName);
+            
+        public string GetInstancePath(string instanceName, string basedir) =>
+            Path.Combine(basedir, instanceName);
         
         public List<string> GetInstances() => null;
         
@@ -34,24 +34,27 @@ namespace Alpacka.Lib.Instances
             // var forgePath     = Path.Combine(instancePath, $"forge-universal.jar");
             
             // Download the Forge installer.
-            var forgeURL = forgeVersion.GetInstaller().GetURL();
-            DownloadedFile installerFile; // TODO: Move cache related code somewhere else?
             using (var fileCache = new FileCache(Path.Combine(Constants.CachePath, "forge")))
             using (var downloader = new FileDownloaderURL(fileCache))
-                installerFile = downloader.Download(forgeURL).Result;
-            
-            // Run it.
-            var startInfo = new ProcessStartInfo {
-                FileName  = "java", // TODO: Allow specifiying java bin path?
-                Arguments = $"-jar \"{ installerFile.FullPath }\" --installServer", // FIXME: Escape path!
-                WorkingDirectory = instancePath
-            };
-            using (var process = Process.Start(startInfo)) {
-                process.WaitForExit();
-                // TODO: Proper error handling. (Redirect process output?)
-                if (process.ExitCode != 0) throw new Exception(
-                    $"Failed to install Forge server (exit code { process.ExitCode })");
+            {
+                var forgeURL = forgeVersion.GetInstaller().GetURL();
+                var installerFile = downloader.Download(forgeURL).Result;
+                
+                // Run it.
+                var startInfo = new ProcessStartInfo {
+                    FileName  = "java", // TODO: Allow specifiying java bin path?
+                    Arguments = $"-jar \"{ installerFile.FullPath }\" --installServer", // FIXME: Escape path!
+                    WorkingDirectory = Path.Combine(instancePath, Constants.MC_DIR)
+                };
+                using (var process = Process.Start(startInfo)) {
+                    process.WaitForExit();
+                    // TODO: Proper error handling. (Redirect process output?)
+                    if (process.ExitCode != 0) throw new Exception(
+                        $"Failed to install Forge server (exit code { process.ExitCode })");
+                }
+                Console.WriteLine($"finished: 'java -jar \"{ installerFile.FullPath }\" --installServer' in { Path.Combine(instancePath, Constants.MC_DIR) }");
             }
+            
         }
         
         public void Remove(string instancePath)

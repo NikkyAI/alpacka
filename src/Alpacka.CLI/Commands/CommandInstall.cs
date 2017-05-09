@@ -43,7 +43,7 @@ namespace Alpacka.CLI.Commands
                 var tempDirName   = Guid.NewGuid().ToString();
                 var tempClonePath = directoryIsPath
                     ? directory.Parent.CreateSubdirectory(tempDirName).FullName
-                    : instanceHandler.GetInstancePath(tempDirName);
+                    : instanceHandler.GetInstancePath(tempDirName, Directory.GetCurrentDirectory());
                 
                 try {
                     
@@ -56,7 +56,7 @@ namespace Alpacka.CLI.Commands
                     var safeName = string.Join("_", pack.Name.Split(Path.GetInvalidPathChars()));
                     var instancePath = directoryIsPath
                         ? directory.FullName
-                        : instanceHandler.GetInstancePath(safeName);
+                        : instanceHandler.GetInstancePath(safeName, Directory.GetCurrentDirectory());
                     Debug.WriteLine($"Instance path: { instancePath }");
                     
                     if (Directory.Exists(instancePath)) {
