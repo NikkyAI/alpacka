@@ -25,6 +25,9 @@ namespace Alpacka.Lib.Instances.MultiMC
         
         public string GetInstancePath(string instanceName) =>
             Path.Combine(_config.InstancesPath, instanceName);
+            
+        public string GetInstancePath(string instanceName, string basedir) =>
+            Path.Combine(_config.InstancesPath, instanceName);
         
         public List<string> GetInstances() =>
             Directory.EnumerateDirectories(_config.InstancesPath)

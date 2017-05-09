@@ -14,6 +14,9 @@ namespace Alpacka.Lib.Instances
         
         public string GetInstancePath(string instanceName) =>
             Path.Combine(Directory.GetCurrentDirectory(), instanceName);
+            
+        public string GetInstancePath(string instanceName, string basedir) =>
+            Path.Combine(basedir, instanceName);
         
         public List<string> GetInstances() => null;
         
