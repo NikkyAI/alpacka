@@ -1,0 +1,2 @@
+# CLI
+[Commands](commands.md)
