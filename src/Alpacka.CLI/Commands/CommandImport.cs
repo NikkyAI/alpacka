@@ -136,28 +136,30 @@ namespace Alpacka.CLI.Commands
                 modGroup.Add(latestGroup);
                 modpack.Includes.Add(modGroup);
                 
-                async Task<EntryResource> processFile(PackFile file) 
+                using (var curseMeta = new CurseMeta())
                 {
-                    Console.WriteLine($"mod: { file.ProjectID } file: { file.FileID }");
-                    var addon = await CurseMeta.GetAddon(file.ProjectID);
-                    var addonFile = await CurseMeta.GetAddonFile(file.ProjectID, file.FileID);
-                    var name = addon.Name.Trim();
-                    var version = addonFile.FileName.Trim().TrimEnd(".jar".ToCharArray());
-                    Console.WriteLine($"mod: { file.ProjectID } file: { file.FileID } version: { version }");
-                    var resoure = new EntryResource {
-                        //Name = name,
-                        Source = name,
-                        Version = version
-                    };
-                    return resoure;
+                    async Task<EntryResource> processFile(PackFile file) 
+                    {
+                        Console.WriteLine($"mod: { file.ProjectID } file: { file.FileID }");
+                        var addon = await curseMeta.GetAddon(file.ProjectID);
+                        var addonFile = await curseMeta.GetAddonFile(file.ProjectID, file.FileID);
+                        var name = addon.Name.Trim();
+                        var version = addonFile.FileName.Trim().TrimEnd(".jar".ToCharArray());
+                        Console.WriteLine($"mod: { file.ProjectID } file: { file.FileID } version: { version }");
+                        var resoure = new EntryResource {
+                            //Name = name,
+                            Source = name,
+                            Version = version
+                        };
+                        return resoure;
+                    }
+                    
+                    foreach (var f in manifest.Files) {
+                        var entry = await processFile(f);
+                        latestGroup.Add(entry);
+                        await Task.Delay(TimeSpan.FromSeconds(.1));
+                    }
                 }
-                
-                foreach (var f in manifest.Files) {
-                    var entry = await processFile(f);
-                    latestGroup.Add(entry);
-                    await Task.Delay(TimeSpan.FromSeconds(.1));
-                }
-                
                 modpack.Name = manifest.Name;
                 modpack.Authors = new List<string>();
                 modpack.Authors.Add(manifest.Author);
