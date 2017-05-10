@@ -49,7 +49,7 @@ namespace Alpacka.CLI.Commands
                 {
                     // check for changed files
                     var changedFiles = repo.RetrieveStatus().Where(f => f.State != LibGit2Sharp.FileStatus.Ignored );
-                    if (changedFiles.Count() != 0) {
+                    if (argVersion.Value != null && changedFiles.Count() != 0) {
                         Console.WriteLine("WARNING: commit, stash, ignore or discard changes:");
                         foreach (var f in changedFiles)
                         {
@@ -117,7 +117,8 @@ namespace Alpacka.CLI.Commands
                             }
                             var remoteBranch = repo.Branches[$"origin/{repo.Head.FriendlyName}"];
                             //reset to tip of remote
-                            repo.Reset(ResetMode.Mixed, remoteBranch.Tip);
+                            if(remoteBranch != null)
+                                repo.Reset(ResetMode.Mixed, remoteBranch.Tip);
                         }
                     } else {
                         System.Version version = null;

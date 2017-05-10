@@ -103,6 +103,7 @@ namespace Alpacka.Lib.Net
                     } else {
                         if (hasName) modByName.Add(name, resource);
                         if (hasModID) modByID.Add(modID, resource);
+                        
                     }
                 }
             }

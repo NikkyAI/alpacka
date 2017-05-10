@@ -1,12 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using LibGit2Sharp;
 using Microsoft.Extensions.CommandLineUtils;
 using Alpacka.Lib;
 using Alpacka.Lib.Net;
 using Alpacka.Lib.Pack;
+using Alpacka.Lib.Pack.Config;
 using Alpacka.Lib.Curse;
 using Alpacka.Lib.Utility;
 using ICSharpCode.SharpZipLib.Zip;
@@ -14,6 +17,7 @@ using ICSharpCode.SharpZipLib.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Threading.Tasks;
+using YamlDotNet.Serialization;
 
 namespace Alpacka.CLI.Commands
 {
@@ -40,11 +44,11 @@ namespace Alpacka.CLI.Commands
                     return 1;
                 }
                 
-                var tempDirName   = Guid.NewGuid().ToString();
-                var tempExtractPath = instanceHandler.GetInstancePath(tempDirName, Directory.GetCurrentDirectory());
+                // var tempDirName   = Guid.NewGuid().ToString();
+                var tempExtractPath = instanceHandler.GetInstancePath(Guid.NewGuid().ToString(), Directory.GetCurrentDirectory());
                     
                 using (var fileCache = new FileCache(Path.Combine(Constants.CachePath, "curseimport")))
-                using (var downloader = new FileDownloaderURL(fileCache))
+                using (var downloader = new FileDownloader(fileCache))
                 {
                     var file = await downloader.Download(argZip.Value);
                     Console.WriteLine($"downloaded: { file.FileName }");
@@ -104,8 +108,8 @@ namespace Alpacka.CLI.Commands
                 var manifest = JsonConvert.DeserializeObject<PackManifest>(File.ReadAllText(Path.Combine(tempExtractPath, "manifest.json")), _settings);
                 
                 var safeName = string.Join("_", manifest.Name.Split(Path.GetInvalidPathChars()));
-                
-                var instancePath = instanceHandler.GetInstancePath(safeName, Directory.GetCurrentDirectory());
+                var safeVersion = string.Join("_", manifest.Version.Split(Path.GetInvalidPathChars()));
+                var instancePath = instanceHandler.GetInstancePath(safeName + "-" + safeVersion, Directory.GetCurrentDirectory());
                 var configPathFile = Path.Combine(instancePath, Constants.PACK_CONFIG_FILE);
                 
                 if (File.Exists(configPathFile)) {
@@ -123,82 +127,83 @@ namespace Alpacka.CLI.Commands
                 //TODO: process files, get project names and file names (versions)
                 
                 
-                
-                // var description = await CurseMeta.GetAddonDescription(manifest.ProjectID);
-                // Console.WriteLine($"description: { description }");
-                
-                // TODO: Move this to a utility method. (In Alpacka.Lib?)
-
-                // var resourceStream = GetType().GetTypeInfo().Assembly.GetManifestResourceStream("Alpacka.CLI.Resources.packconfig.curse.header.yaml");
-                string modsTemplate;
-                using (var reader = new StreamReader(GetType().GetTypeInfo().Assembly.GetManifestResourceStream("Alpacka.CLI.Resources.packconfig.curse.mods.yaml")))
-                    modsTemplate = reader.ReadToEnd();
+                var modpack = new ModpackConfig();
                 
                 
-                async Task<String> processFile(PackFile file) 
+                modpack.Includes = new EntryIncludes();
+                var modGroup = new EntryIncludes.Group("mods");
+                var latestGroup = new EntryIncludes.Group("latest");
+                modGroup.Add(latestGroup);
+                modpack.Includes.Add(modGroup);
+                
+                async Task<EntryResource> processFile(PackFile file) 
                 {
                     Console.WriteLine($"mod: { file.ProjectID } file: { file.FileID }");
-                    try {
-                        var addon = await CurseMeta.GetAddon(file.ProjectID);
-                        var addonFIle = await CurseMeta.GetAddonFile(file.ProjectID, file.FileID);
-                        var modstring = Regex.Replace(modsTemplate, "{{(.+)}}", match => {
-                            switch (match.Groups[1].Value.Trim()) {
-                                case "MODNAME": return addon.Name;
-                                case "MODVERSION": return addonFIle.FileNameOnDisk;
-                                default: return "...";
-                            }
-                        }); 
-                        return modstring;
-                    } catch (Exception e) {
-                        Console.WriteLine(e.GetType().ToPrettyJson());
-                        Console.WriteLine(e.Message);
-                        return $"ERROR with https://cursemeta.nikky.moe/addon/{ file.ProjectID }/files/{ file.FileID }.json";
-                    }
+                    var addon = await CurseMeta.GetAddon(file.ProjectID);
+                    var addonFile = await CurseMeta.GetAddonFile(file.ProjectID, file.FileID);
+                    var name = addon.Name.Trim();
+                    var version = addonFile.FileName.Trim().TrimEnd(".jar".ToCharArray());
+                    Console.WriteLine($"mod: { file.ProjectID } file: { file.FileID } version: { version }");
+                    var resoure = new EntryResource {
+                        //Name = name,
+                        Source = name,
+                        Version = version
+                    };
+                    return resoure;
                 }
-                //var tasks = manifest.Files.Select(processFile).ToList();
-                var mods = "";
+                
                 foreach (var f in manifest.Files) {
-                    var s = await processFile(f);
-                    await Task.Delay(TimeSpan.FromSeconds(2));
-                    mods += s + "\n";
+                    var entry = await processFile(f);
+                    latestGroup.Add(entry);
+                    await Task.Delay(TimeSpan.FromSeconds(.1));
                 }
-                //string.Join("\n", await Task.WhenAll(manifest.Files.Select(processFile)));
-                //await Task.WhenAll(manifest.Files.Select(processFile));
-                //var mods = manifest.Files.Select(processFile).Aggregate((a, b) => a +"\n"+ b);
                 
-                 
-                var resourceStream = GetType().GetTypeInfo().Assembly
-                    .GetManifestResourceStream("Alpacka.CLI.Resources.packconfig.curse.header.yaml");
-                string defaultConfig;
-                using (var reader = new StreamReader(resourceStream))
-                    defaultConfig = reader.ReadToEnd();
+                modpack.Name = manifest.Name;
+                modpack.Authors = new List<string>();
+                modpack.Authors.Add(manifest.Author);
+                modpack.Authors.Add(Environment.GetEnvironmentVariable("USERNAME") ?? "...");
+
+                modpack.MinecraftVersion = manifest.Minecraft.Version;
+                modpack.ForgeVersion = manifest.Minecraft.ModLoaders[0].Id.TrimStart("forge-".ToCharArray());
                 
-                var packName = "...";
-                var authors = Environment.GetEnvironmentVariable("USERNAME") ?? "...";
+                // Console.WriteLine($"generated config: \n{ defaultConfig }");
                 
-                //TODO: get forge version from modloader entry in manifest > minecraft > modLoaders
-                var forgeData    = ForgeVersionData.Download().Result;
-                var mcVersion    = forgeData.GetRecentMCVersion(Release.Recommended);
-                var forgeVersion = forgeData.GetRecent(mcVersion, Release.Recommended)?.GetFullVersion();
+                Directory.CreateDirectory(instancePath);
                 
-                defaultConfig = Regex.Replace(defaultConfig, "{{(.+)}}", match => {
-                    switch (match.Groups[1].Value.Trim()) {
-                        case "NAME": return packName;
-                        case "AUTHORS": return authors;
-                        case "MC_VERSION": return mcVersion;
-                        case "FORGE_VERSION": return forgeVersion;
-                        case "MODS": return mods;
-                        default: return "...";
-                    }
-                });
+                var serializer = new Serializer();
+                File.WriteAllText(configPathFile, serializer.Serialize(modpack));
                 
-                Console.WriteLine($"generated config: \n{ defaultConfig }");
+                var build = await CommandBuild.Build(modpack);
                 
-                // Directory.CreateDirectory(instancePath);
+                //TODO: build modpack and call instanceHandler Install
+                instanceHandler.Install(instancePath, build);
                 
                 var info = new AlpackaInfo { InstanceType = instanceHandler.Name };
                 info.Save(instancePath);
-                // File.WriteAllText(configPathFile, defaultConfig);
+                
+                var overrides = Path.Combine(tempExtractPath, manifest.Overrides);
+                Console.WriteLine($"overrides: { overrides }");
+                Directory.Move(overrides, Path.Combine(instancePath, Constants.MC_DIR));
+                
+                Directory.Delete(tempExtractPath, true);
+                
+                //TODO: git init, gitignore etc..
+                
+                Repository.Init(instancePath);
+                
+                using (var repo = new Repository(instancePath))
+                {
+                    LibGit2Sharp.Commands.Stage(repo, "*");
+                    
+                    var config = repo.Config;
+                    
+                    var name = config.GetValueOrDefault<string>("user.name", "nobody");
+                    var email = config.GetValueOrDefault<string>("user.email", "@example.com");
+                    Signature user = new Signature(name, email, DateTime.Now);
+                    
+                    // Commit to the repository
+                    Commit commit = repo.Commit($"Initial Commit\nPack generated from { argZip.Value }", user, user);
+                }
                 
                 Console.WriteLine($"Created stub alpacka pack in { Path.GetFullPath(instancePath) }");
                 Console.WriteLine($"Edit { Constants.PACK_CONFIG_FILE } and run 'alpacka update'");

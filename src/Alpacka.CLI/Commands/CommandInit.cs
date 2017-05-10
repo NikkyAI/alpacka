@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using LibGit2Sharp;
 using Microsoft.Extensions.CommandLineUtils;
 using Alpacka.Lib;
 using Alpacka.Lib.Net;
@@ -68,6 +69,8 @@ namespace Alpacka.CLI.Commands
                 var info = new AlpackaInfo { InstanceType = instanceHandler.Name };
                     info.Save(instancePath);
                 File.WriteAllText(configPathFile, defaultConfig);
+                
+                Repository.Init(instancePath);
                 
                 Console.WriteLine($"Created stub alpacka pack in { Path.GetFullPath(instancePath) }");
                 Console.WriteLine($"Edit { Constants.PACK_CONFIG_FILE } and run 'alpacka update'");

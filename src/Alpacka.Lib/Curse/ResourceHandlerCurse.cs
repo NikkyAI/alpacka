@@ -101,7 +101,8 @@ namespace Alpacka.Lib.Curse
         public async Task<int> FindFileId(Addon addon, EntryMod mod, string mcVersion, bool optional)
         {
             // Debug.WriteLine($"find file\n mcVersion: { mcVersion }\n name: { Addon.Name }"); // TODO: verbose logging
-            // Debug.WriteLine($"Addon: { Addon.ToPrettyJson() }"); // TODO: verbose logging
+            // Debug.WriteLine($"Addon: { addon.ToPrettyJson() }"); // TODO: verbose logging
+            
             if (string.Equals(mod.Version, Release.Recommended.ToString(), StringComparison.OrdinalIgnoreCase)) {
                 
                 var addonFiles = await CurseMeta.GetAddonFiles(addon.Id);
@@ -128,7 +129,8 @@ namespace Alpacka.Lib.Curse
                 
                 Debug.WriteLine($"mod.Name: { mod.Name } mcVersion: { mcVersion } mod.Version: { mod.Version }");
                 var latestFile = sorted.Find(file => (file.GameVersion.Contains(mcVersion) &&
-                                                      file.FileName.Contains(mod.Version)));
+                    (file.FileName.Contains(mod.Version) || file.FileNameOnDisk.Contains(mod.Version)))
+                );
                 if (latestFile != null) return latestFile.Id;
                 
             }
