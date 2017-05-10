@@ -17,5 +17,7 @@ namespace Alpacka.Lib.Resources
         public Task<EntryResource> Resolve(EntryResource resource, string mcVersion,
                                            Action<EntryResource> addDependency) =>
             Task.FromResult(resource);
+            
+        public void Finish() {}
     }
 }

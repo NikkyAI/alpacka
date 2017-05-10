@@ -116,6 +116,14 @@ namespace Alpacka.Lib.Net
             // TODO: Resources.
             // TODO: Features.
             
+            // Initialize used source handlers.
+            resources
+                .Select(resource => resource.Handler).Distinct()
+                .Select(handler => {
+                    handler.Finish(); 
+                    return 0;
+                });
+            
             return build;
         }
         

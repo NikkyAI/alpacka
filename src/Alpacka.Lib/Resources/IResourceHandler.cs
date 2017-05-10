@@ -22,5 +22,7 @@ namespace Alpacka.Lib.Resources
         ///           Returns the resolved resources with filled out information.
         ///           May be EntryMod, or null if resource should be skipped. </summary>
         Task<EntryResource> Resolve(EntryResource resource, string mcVersion, Action<EntryResource> addDependency);
+        
+        void Finish();
     }
 }
