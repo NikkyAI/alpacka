@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Alpacka.Lib.Curse;
 using Alpacka.Lib.Instances;
 using Alpacka.Lib.Instances.MultiMC;

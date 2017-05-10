@@ -12,7 +12,6 @@ using Alpacka.Lib;
 using Alpacka.Lib.Net;
 using Alpacka.Lib.Pack;
 using Alpacka.Lib.Pack.Config;
-using Alpacka.Lib.Utility;
 
 namespace Alpacka.CLI.Commands
 {

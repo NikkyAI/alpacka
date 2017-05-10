@@ -2,11 +2,9 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.CommandLineUtils;
-using Alpacka.Lib;
 using Alpacka.Lib.Net;
 using Alpacka.Lib.Pack;
 using Alpacka.Lib.Pack.Config;
-using Alpacka.Lib.Utility;
 
 namespace Alpacka.CLI.Commands
 {
@@ -38,8 +36,7 @@ namespace Alpacka.CLI.Commands
         
         public static async Task<ModpackBuild> Build(ModpackConfig config)
         {
-            using (var modsCache = new FileCache(Path.Combine(Constants.CachePath, "mods")))
-            using (var downloader = new ModpackDownloader(modsCache))
+            using (var downloader = new ModpackDownloader())
                 return await downloader.Resolve(config);
         }
     }

@@ -6,7 +6,6 @@ using Xunit;
 using Alpacka.Lib.Pack;
 using Alpacka.Lib.Curse;
 using Alpacka.Lib.Net;
-using Alpacka.Lib.Utility;
 
 namespace Alpacka.Test
 {

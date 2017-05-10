@@ -6,7 +6,6 @@ using Microsoft.Extensions.CommandLineUtils;
 using LibGit2Sharp;
 using Alpacka.Lib;
 using Alpacka.Lib.Net;
-using Alpacka.Lib.Pack;
 using Alpacka.Lib.Pack.Config;
 
 namespace Alpacka.CLI.Commands

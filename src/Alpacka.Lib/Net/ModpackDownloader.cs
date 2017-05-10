@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Alpacka.Lib.Net;
 using Alpacka.Lib.Pack;
 using Alpacka.Lib.Pack.Config;
 using Alpacka.Lib.Resources;
@@ -14,21 +13,23 @@ namespace Alpacka.Lib.Net
 {
     public class ModpackDownloader : IDisposable
     {
+        private readonly FileCache _fileCache;
         private readonly IFileDownloader _fileDownloader;
         
-        public ModpackDownloader(FileCache modsCache)
-            : this(new FileDownloaderURL(modsCache)) {  }
-        public ModpackDownloader(IFileDownloader fileDownloader)
-            { _fileDownloader = fileDownloader; }
+        public ModpackDownloader()
+        {
+            _fileCache = new FileCache(Path.Combine(Constants.CachePath, "resources"));
+            _fileDownloader = new FileDownloaderURL(_fileCache);
+        }
         
         ~ModpackDownloader() => Dispose();
         
         public void Dispose()
         {
             (_fileDownloader as IDisposable)?.Dispose();
+            (_fileCache as IDisposable)?.Dispose();
             GC.SuppressFinalize(this);
         }
-        
         
         /// <summary> Resolves the mods from the specified ModpackConfig and creates a
         ///           ModpackBuild with all dependencies and sources set to http(s) URLs. </summary>
