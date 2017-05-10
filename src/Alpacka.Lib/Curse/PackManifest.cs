@@ -10,6 +10,7 @@ namespace Alpacka.Lib.Curse
         public string Author { get; set; }
         public int ProjectID { get; set; }
         public string Overrides { get; set; }
+        public PackFile[] Files { get; set; }
     }
     
     public class PackFile

@@ -33,7 +33,14 @@ namespace Alpacka.Lib.Curse
             Debug.WriteLine($"getAddon { addonId }"); // TODO: verbose logging
             var jsonFile = await _downloader.Download($"{ URL_BASE }/addon/{ addonId }/index.json", $"addon/{ addonId }/index.json");
             var json = File.ReadAllText(jsonFile.FullPath);
-            return JsonConvert.DeserializeObject<Addon>(json, _settings);
+            try {
+                return JsonConvert.DeserializeObject<Addon>(json, _settings);
+            } 
+            catch (JsonSerializationException se) {
+                Console.WriteLine($"{ URL_BASE }/addon/{ addonId }/index.json");
+                Console.WriteLine($"ERROR: connot parse { json }");
+                return null;
+            }
         }
         
         // Get Addon Description

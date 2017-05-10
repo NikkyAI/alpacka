@@ -1,0 +1,36 @@
+name: {{ NAME }}
+description: {{ DESCRIPTION }}
+authors: [ {{ AUTHORS }} ]
+links:
+  website: ...
+  source: ...
+  issues: ...
+  donations: ...
+
+minecraftVersion: {{ MC_VERSION }}
+forgeVersion: recommended
+
+# These following defaults defined by default but are provided
+# as examples for how to define your own and what's available.
+# (You can remove this section if you don't modify anything.)
+defaults:
+  # Special group * applies to all included resources
+  mods:
+    path: "mods"
+    handler: curse
+    version: recommended # or latest
+  config:
+    path: "config"
+    handler: file
+  client: { side: client }
+  server: { side: server }
+  curse: { handler: curse }
+  github: { handler: github }
+  recommended: { version: recommended }
+  latest: { version: latest }
+  
+includes:
+  
+  mods:
+    common:
+{{ MODS }}

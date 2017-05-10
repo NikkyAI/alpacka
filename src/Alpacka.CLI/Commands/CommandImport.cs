@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.CommandLineUtils;
@@ -7,10 +8,12 @@ using Alpacka.Lib;
 using Alpacka.Lib.Net;
 using Alpacka.Lib.Pack;
 using Alpacka.Lib.Curse;
+using Alpacka.Lib.Utility;
 using ICSharpCode.SharpZipLib.Zip;
 using ICSharpCode.SharpZipLib.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace Alpacka.CLI.Commands
 {
@@ -90,6 +93,7 @@ namespace Alpacka.CLI.Commands
                     
                     Console.WriteLine($"extracted: { tempExtractPath }");
                 }
+                
                 JsonSerializerSettings _settings = new JsonSerializerSettings {
                     NullValueHandling = NullValueHandling.Ignore,
                     ContractResolver = new CamelCasePropertyNamesContractResolver(),
@@ -118,12 +122,53 @@ namespace Alpacka.CLI.Commands
                 
                 //TODO: process files, get project names and file names (versions)
                 
+                
+                
                 // var description = await CurseMeta.GetAddonDescription(manifest.ProjectID);
                 // Console.WriteLine($"description: { description }");
                 
                 // TODO: Move this to a utility method. (In Alpacka.Lib?)
+
+                // var resourceStream = GetType().GetTypeInfo().Assembly.GetManifestResourceStream("Alpacka.CLI.Resources.packconfig.curse.header.yaml");
+                string modsTemplate;
+                using (var reader = new StreamReader(GetType().GetTypeInfo().Assembly.GetManifestResourceStream("Alpacka.CLI.Resources.packconfig.curse.mods.yaml")))
+                    modsTemplate = reader.ReadToEnd();
+                
+                
+                async Task<String> processFile(PackFile file) 
+                {
+                    Console.WriteLine($"mod: { file.ProjectID } file: { file.FileID }");
+                    try {
+                        var addon = await CurseMeta.GetAddon(file.ProjectID);
+                        var addonFIle = await CurseMeta.GetAddonFile(file.ProjectID, file.FileID);
+                        var modstring = Regex.Replace(modsTemplate, "{{(.+)}}", match => {
+                            switch (match.Groups[1].Value.Trim()) {
+                                case "MODNAME": return addon.Name;
+                                case "MODVERSION": return addonFIle.FileNameOnDisk;
+                                default: return "...";
+                            }
+                        }); 
+                        return modstring;
+                    } catch (Exception e) {
+                        Console.WriteLine(e.GetType().ToPrettyJson());
+                        Console.WriteLine(e.Message);
+                        return $"ERROR with https://cursemeta.nikky.moe/addon/{ file.ProjectID }/files/{ file.FileID }.json";
+                    }
+                }
+                //var tasks = manifest.Files.Select(processFile).ToList();
+                var mods = "";
+                foreach (var f in manifest.Files) {
+                    var s = await processFile(f);
+                    await Task.Delay(TimeSpan.FromSeconds(2));
+                    mods += s + "\n";
+                }
+                //string.Join("\n", await Task.WhenAll(manifest.Files.Select(processFile)));
+                //await Task.WhenAll(manifest.Files.Select(processFile));
+                //var mods = manifest.Files.Select(processFile).Aggregate((a, b) => a +"\n"+ b);
+                
+                 
                 var resourceStream = GetType().GetTypeInfo().Assembly
-                    .GetManifestResourceStream("Alpacka.CLI.Resources.packconfig.default.yaml");
+                    .GetManifestResourceStream("Alpacka.CLI.Resources.packconfig.curse.header.yaml");
                 string defaultConfig;
                 using (var reader = new StreamReader(resourceStream))
                     defaultConfig = reader.ReadToEnd();
@@ -142,9 +187,12 @@ namespace Alpacka.CLI.Commands
                         case "AUTHORS": return authors;
                         case "MC_VERSION": return mcVersion;
                         case "FORGE_VERSION": return forgeVersion;
+                        case "MODS": return mods;
                         default: return "...";
                     }
                 });
+                
+                Console.WriteLine($"generated config: \n{ defaultConfig }");
                 
                 // Directory.CreateDirectory(instancePath);
                 
