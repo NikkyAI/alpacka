@@ -200,11 +200,15 @@ namespace Alpacka.Lib.Net
                 using (var readStream = File.OpenRead(DownloadedFile.FullPath))
                     try { modInfo = await MCModInfo.Extract(readStream); }
                     catch (MCModInfoException ex) {
-                        Console.WriteLine($"INFO: Could not read mcmod.info of mod '{ this }': { ex.Message }");
+                        Console.WriteLine($"INFO: Could not read mcmod.info of mod { this }: { ex.Message }");
                         return;
                     }
                 
-                ModID = modInfo.ModID;
+                // Apparently some mods don't update their modid in mcmod.info from "examplemod".
+                if (modInfo.ModID == "examplemod")
+                    Console.WriteLine($"INFO: ModID in mcmod.info of mod { this } is '{ modInfo.ModID }'");
+                else ModID = modInfo.ModID;
+                
                 if (string.IsNullOrEmpty(mod.Name)) mod.Name = modInfo.Name;
                 if (string.IsNullOrEmpty(mod.Description)) mod.Description = modInfo.Description;
                 if (string.IsNullOrEmpty(mod.Links?.Website)) {
@@ -212,8 +216,13 @@ namespace Alpacka.Lib.Net
                     mod.Links.Website = modInfo.URL;
                 }
                 
-                // Some mods don't replace their version string correctly.
-                if (modInfo.Version != "@VERSION@") mod.Version = modInfo.Version;
+                if (!string.IsNullOrEmpty(modInfo.Version)) {
+                    // Some mods don't replace their version string correctly.
+                    var chr = modInfo.Version[0];
+                    if ((chr == '$') || (chr == '@'))
+                        Console.WriteLine($"INFO: Version in mcmod.info of mod { this } is '{ modInfo.Version }'");
+                    else mod.Version = modInfo.Version;
+                }
                 // TODO: Warn if version doesn't match up?
             }
             
