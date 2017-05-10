@@ -23,6 +23,7 @@ namespace Alpacka.CLI
             Commands.Add(new CommandRelease());
             Commands.Add(new CommandInstall());
             Commands.Add(new CommandUpdate());
+            Commands.Add(new CommandImport());
             
             VersionOption("-v | --version", Version);
             HelpOption("-? | -h | --help");
