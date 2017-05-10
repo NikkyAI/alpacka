@@ -14,12 +14,12 @@ namespace Alpacka.Lib.Net
     public class ModpackDownloader : IDisposable
     {
         private readonly FileCache _fileCache;
-        private readonly IFileDownloader _fileDownloader;
+        private readonly FileDownloader _fileDownloader;
         
         public ModpackDownloader()
         {
             _fileCache = new FileCache(Path.Combine(Constants.CachePath, "resources"));
-            _fileDownloader = new FileDownloaderURL(_fileCache);
+            _fileDownloader = new FileDownloader(_fileCache);
         }
         
         ~ModpackDownloader() => Dispose();
@@ -176,7 +176,7 @@ namespace Alpacka.Lib.Net
                 } catch (Exception ex) { Exception = ex; }
             }
             
-            public async Task Download(IFileDownloader fileDownloader)
+            public async Task Download(FileDownloader fileDownloader)
             {
                 if (Resource == null) return;
                 try {

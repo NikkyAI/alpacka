@@ -259,7 +259,7 @@ namespace Alpacka.CLI.Commands
             
             var mods = modList.Where(mod => mod.Side == null || (mod.Side & side) == side).ToList(); 
             using (var fileCache = new FileCache(Path.Combine(Constants.CachePath, "mods")))
-            using (var downloader = new FileDownloaderURL(fileCache))
+            using (var downloader = new FileDownloader(fileCache))
                 await Task.WhenAll(mods.Select(async mod => {
                     var file = await downloader.Download(mod.Source);
                     if ((mod.MD5 != null) && (mod.MD5 != file.MD5))

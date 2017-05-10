@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Alpacka.Lib.Net
 {
-    public class FileDownloaderURL : IFileDownloader, IDisposable
+    public class FileDownloader : IDisposable
     {
         private static readonly int MAX_REDIRECTS = 8;
         
@@ -20,14 +20,14 @@ namespace Alpacka.Lib.Net
         private readonly string _tempDir;
         private bool _disposed = false;
         
-        public FileDownloaderURL(FileCache cache)
+        public FileDownloader(FileCache cache)
         {
             _cache = cache;
             _tempDir = Path.Combine(Path.GetTempPath(), $"alpacka-{ _rnd.Next() }");
             Directory.CreateDirectory(_tempDir);
         }
         
-        ~FileDownloaderURL() =>
+        ~FileDownloader() =>
             Dispose();
         
         public void Dispose()
@@ -38,7 +38,8 @@ namespace Alpacka.Lib.Net
             GC.SuppressFinalize(this);
         }
         
-        
+        /// <summary> Downloads a file from the specified URL using the supplied
+        ///           relativePath (defaulting to the server's suggested filename). </summary>
         public Task<DownloadedFile> Download(string url, string relativePath = null) =>
             _cache.Get(url, async oldFile => {
                 

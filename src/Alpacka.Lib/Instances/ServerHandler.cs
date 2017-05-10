@@ -35,7 +35,7 @@ namespace Alpacka.Lib.Instances
             
             // Download the Forge installer.
             using (var fileCache = new FileCache(Path.Combine(Constants.CachePath, "forge")))
-            using (var downloader = new FileDownloaderURL(fileCache))
+            using (var downloader = new FileDownloader(fileCache))
             {
                 var forgeURL = forgeVersion.GetInstaller().GetURL();
                 var installerFile = downloader.Download(forgeURL).Result;

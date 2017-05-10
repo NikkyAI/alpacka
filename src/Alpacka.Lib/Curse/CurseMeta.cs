@@ -17,8 +17,8 @@ namespace Alpacka.Lib.Curse
                 MissingMemberHandling = MissingMemberHandling.Ignore 
             };
         
-        private static readonly FileDownloaderURL _downloader = 
-            new FileDownloaderURL(new FileCache(Path.Combine(Constants.CachePath, "cursemeta")));
+        private static readonly FileDownloader _downloader = 
+            new FileDownloader(new FileCache(Path.Combine(Constants.CachePath, "cursemeta")));
         private static readonly string URL_BASE = "https://cursemeta.nikky.moe";
         
         // Get Addon
