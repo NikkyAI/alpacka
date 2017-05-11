@@ -9,6 +9,12 @@ namespace Alpacka.Lib.Pack.Config
 {
     public class ModpackConfig : Modpack
     {
+        internal static Serializer Serializer { get; } = new SerializerBuilder()
+            .WithNamingConvention(new CamelCaseNamingConvention())
+            .WithTypeConverter(new EntryDefaults.TypeConverter())
+            .WithTypeConverter(new EntryIncludes.TypeConverter())
+            .Build();
+        
         internal static Deserializer Deserializer { get; } = new DeserializerBuilder()
             .IgnoreUnmatchedProperties()
             .WithNamingConvention(new CamelCaseNamingConvention())

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using YamlDotNet.Core;
+using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
 
 namespace Alpacka.Lib.Pack.Config
@@ -84,9 +85,15 @@ namespace Alpacka.Lib.Pack.Config
                 return defaults;
             }
             
-            // TODO: Implement EntryDefaults.TypeConverter.WriteYaml.
-            public void WriteYaml(IEmitter emitter, object value, Type type) =>
-                throw new NotImplementedException();
+            public void WriteYaml(IEmitter emitter, object value, Type type)
+            {
+                emitter.Emit(new MappingStart());
+                foreach (var group in (EntryDefaults)value) {
+                    emitter.Emit(new Scalar(group.Name));
+                    ModpackConfig.Serializer.Serialize(emitter, value);
+                }
+                emitter.Emit(new MappingEnd());
+            }
         }
         
         

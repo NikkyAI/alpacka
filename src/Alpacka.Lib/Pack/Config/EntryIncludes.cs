@@ -89,9 +89,50 @@ namespace Alpacka.Lib.Pack.Config
                 return group;
             }
             
-            // TODO: Implement EntryIncludes.TypeConverter.WriteYaml.
-            public void WriteYaml(IEmitter emitter, object value, Type type) =>
-                throw new NotImplementedException();
+            public void WriteYaml(IEmitter emitter, object value, Type type)
+            {
+                emitter.Emit(new MappingStart());
+                foreach (var group in (EntryIncludes)value)
+                    WriteGroup(emitter, group);
+                emitter.Emit(new MappingEnd());
+            }
+            
+            public void WriteGroup(IEmitter emitter, Group group)
+            {
+                // Emit the full group name (i.e. "foo & bar & baz").
+                emitter.Emit(new Scalar(group.FullName));
+                
+                // If the group is a feature, make sure the feature name is included.
+                var feature = (group as Feature);
+                if (feature != null) {
+                    emitter.Emit(new Scalar("feature"));
+                    emitter.Emit(new Scalar(feature.Type));
+                }
+                
+                // If this group contains subgroups, emit these in a map.
+                if (group.FirstOrDefault() is Group) {
+                    emitter.Emit(new MappingStart());
+                    foreach (var subGroup in group.Cast<Group>())
+                        WriteGroup(emitter, subGroup);
+                    emitter.Emit(new MappingEnd());
+                // Otherwise emit a sequence of EntryResources.
+                } else {
+                    emitter.Emit(new SequenceStart(null, null, true, SequenceStyle.Any));
+                    foreach (var resource in group.Cast<EntryResource>()) {
+                        // If the resource only contains source and possibly version, emit as string.
+                        if ((resource.Handler == null) && (resource.MD5 == null) &&
+                            (resource.Path == null) && (resource.Side == null) &&
+                            (resource.Source.IndexOf('@') < 0)) {
+                            var str = resource.Source;
+                            if (resource.Version != null)
+                                str += $" @ { resource.Version }";
+                            emitter.Emit(new Scalar(str));
+                        // Otherwise emit the full object.
+                        } else ModpackConfig.Serializer.Serialize(emitter, resource);
+                    }
+                    emitter.Emit(new SequenceEnd());
+                }
+            }
         }
     }
 }
