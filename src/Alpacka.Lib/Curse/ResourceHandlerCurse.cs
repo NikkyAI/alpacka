@@ -96,6 +96,7 @@ namespace Alpacka.Lib.Curse
                         Source  = dep.AddonId.ToString(),
                         Version = Release.Recommended.ToString(), //TODO: apply same defaults to mod entry on callback
                         Side    = mod.Side,
+                        Path = "mods"
                     };
                     _modToDependencyType[depMod] = dep.Type;
                     addDependency(depMod);

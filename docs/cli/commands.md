@@ -1,8 +1,10 @@
 # Commands
 
+In doubt check `alpacka --help`
+
 ## `alpacka`
 
-???
+Run this to get started
 
 Options
 
@@ -17,7 +19,7 @@ Initializes a new alpacka packconfig.yaml and git repo
 
 | Required | Argument      | Description |
 |----------|---------------|-------------|
-| X        | `target`      | Target to init as. [Possible targets](#possible-targets) |
+| X        | `type`        | Instance Type to install. [Instance Types](#instance-types) |
 | X        | `name`        | Name of the modpack, is used as the directory of the pack instance |
 
 
@@ -27,7 +29,7 @@ Creates a new Minecraft instance.
 
 | Required | Argument      | Description |
 |----------|---------------|-------------|
-| X        | `target`      | Target to install for. [Possible targets](#possible-targets) |
+| X        | `type`        | Instance Type to install. [Instance Types](#instance-types) |
 | X        | `repository`  | Git repository of the alpacka modpack to install. |
 |          | `[directory]` | Directory or name to install the pack into. Defaults to pack name.  (wip) |
 
@@ -85,7 +87,13 @@ Unless `--no-commit` is set, after the packbuild.json was written, this creates 
 
 ## `alpacka import`
 
-Creates a new pack based on file information from a curse modpack
+Imports a curse modpack and creates a alpacka pack from it
+
+| Required | Argument    | Description |
+|----------|-------------|-------------|
+| X        | `type`      | Instance Type to install. [Instance Types](#instance-types) |
+| X        | `zip`       | Url of the curse modpack download |
+
 
 ## `alpacka export`
 
@@ -97,10 +105,10 @@ Deletes the alpacka cache folder.
 
 ## Notes
 
-### Possible Targets
+### Instance Types
 
-| Target    | Description                                               |
-|-----------|-----------------------------------------------------------|
-| `vanilla` | Installs an instance into the Vanilla Minecraft launcher. |
-| `multimc` | Creates an instance in MultiMC.                           |
-| `server`  | Creates a Minecraft server set up with the pack.          |
+| Type      | Description                                                       |
+|-----------|-------------------------------------------------------------------|
+| `vanilla` | ~~Installs an instance into the Vanilla Minecraft launcher.~~ WIP |
+| `multimc` | Creates an instance in MultiMC.                                   |
+| `server`  | Creates a Minecraft server set up with the pack.                  |
