@@ -20,6 +20,7 @@ namespace Alpacka.Lib.Pack.Config
             .WithNamingConvention(new CamelCaseNamingConvention())
             .WithNodeDeserializer(inner => new ValidatingNodeDeserializer(inner),
                                     s => s.InsteadOf<ObjectNodeDeserializer>())
+            .WithTypeConverter(new EntryDefaults.TypeConverter())
             .WithTypeConverter(new EntryIncludes.TypeConverter())
             .Build();
         

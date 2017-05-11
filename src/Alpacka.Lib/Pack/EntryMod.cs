@@ -1,13 +1,6 @@
 namespace Alpacka.Lib.Pack
 {
-    public interface IEntryMod
-    {
-        string Name { get; set; }
-        string Description { get; set; }
-        EntryLinks Links { get; set; }
-    }
-    
-    public class EntryMod : EntryResource, IEntryMod
+    public class EntryMod : EntryResource
     {
         public string Name { get; set; }
         public string Description { get; set; }

@@ -3,8 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Alpacka.Lib.Curse;
-using Newtonsoft.Json;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
@@ -18,57 +16,57 @@ namespace Alpacka.Lib.Pack.Config
         
         public EntryDefaults()
         {
-            Add("mods", new Group() {
+            Add(new Group("mods") {
                 Path = "mods",
                 Handler = "curse",
-                Version = Release.Recommended.ToString()
+                Version = Release.Recommended
             });
-            
-            Add("config", new Group() {
+            Add(new Group("config") {
                 Path = "config",
                 Handler = "file"
             });
             
-            Add("client", new Group() { Side = Side.Client });
-            Add("server", new Group() { Side = Side.Server });
+            Add(new Group("client") { Side = Side.Client });
+            Add(new Group("server") { Side = Side.Server });
             
-            Add("curse", new Group() { Handler = "Curse" }); //TODO: get string from resource handler
-            Add("github", new Group() { Handler = "GitHub" });
+            Add(new Group("curse") { Handler = "Curse" });
+            Add(new Group("github") { Handler = "GitHub" });
             
-            Add("recommended", new Group() { Version = Release.Recommended.ToString() });
-            Add("latest", new Group() { Version = Release.Latest.ToString() });
+            Add(new Group("recommended") { Version = Release.Recommended });
+            Add(new Group("latest") { Version = Release.Latest });
         }
         
         
-        public class Group : IEntryResource, IEntryMod
+        public class Group
         {
             [YamlIgnore]
-            public string GroupName { get; set; }
+            public string Name { get; set; }
             
             public Group() {  }
             public Group(string name) { Name = name; }
             
+            /// <summary> Name of the ISourceHandler to use for
+            ///           contained resources if Source is ambiguous. </summary>
             public string Handler { get; set; }
             
-            [YamlMember(Alias = "src"), JsonProperty("src")]
-            public string Source { get; set; }
-            public string MD5 { get; set; }
-            public string Version { get; set; }
+            /// <summary> Default version of contained resources, if any.
+            ///           Currently only applies to mods. </summary>
+            public Release? Version { get; set; }
+            
+            /// <summary> Destination (and sometimes relative
+            ///           source) path of contained resources. </summary>
             public string Path { get; set; }
+            
+            /// <summary> Side of contained resources. If not Both,
+            ///           they will be only be available on this side. </summary>
             public Side? Side { get; set; }
             
-            public string Name { get; set; }
-            public string Description { get; set; }
-            public EntryLinks Links { get; set; }
-
+            
             public static Group operator +(Group left, Group right) => new Group {
-                Handler     = right?.Handler ?? left?.Handler,
-                Version     = right?.Version ?? left?.Version,
-                Path        = right?.Path ?? left?.Path,
-                Side        = right?.Side ?? left?.Side,
-                Name        = right?.Name ?? left?.Name,
-                Description = right?.Description ?? left?.Description,
-                Links       = right?.Links ?? left?.Links
+                Handler = right?.Handler ?? left?.Handler,
+                Version = right?.Version ?? left?.Version,
+                Path    = right?.Path ?? left?.Path,
+                Side    = right?.Side ?? left?.Side
             };
         }
         

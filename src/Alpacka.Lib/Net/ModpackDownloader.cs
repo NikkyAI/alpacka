@@ -103,7 +103,6 @@ namespace Alpacka.Lib.Net
                     } else {
                         if (hasName) modByName.Add(name, resource);
                         if (hasModID) modByID.Add(modID, resource);
-                        
                     }
                 }
             }
@@ -116,9 +115,8 @@ namespace Alpacka.Lib.Net
             // TODO: Resources.
             // TODO: Features.
             
-            // Initialize used source handlers.
-            resources
-                .Select(resource => resource.Handler).Distinct()
+            // Finish/Close used source handlers.
+            resources.Select(resource => resource.Handler).Distinct()
                 .Select(handler => {
                     handler.Finish(); 
                     return 0;
