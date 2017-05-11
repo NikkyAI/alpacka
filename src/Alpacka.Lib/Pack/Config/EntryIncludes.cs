@@ -105,8 +105,8 @@ namespace Alpacka.Lib.Pack.Config
                 // If the group is a feature, make sure the feature name is included.
                 var feature = (group as Feature);
                 if (feature != null) {
-                    emitter.Emit(new Scalar("feature"));
-                    emitter.Emit(new Scalar(feature.Type));
+                    emitter.Emit(new Scalar(feature.FullName));
+                    emitter.Emit(new Scalar(feature.Name));
                 }
                 
                 // If this group contains subgroups, emit these in a map.
