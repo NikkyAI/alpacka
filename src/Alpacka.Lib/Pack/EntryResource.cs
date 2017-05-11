@@ -4,6 +4,34 @@ using YamlDotNet.Serialization;
 
 namespace Alpacka.Lib.Pack
 {
+    public interface IEntryResource
+    {
+        /// <summary> Name of the ISourceHandler to use for
+        ///           this resource if Source is ambiguous. </summary>
+        string Handler { get; set; }
+        
+        /// <summary> Source of the resource. May be a URL.
+        ///           If ambiguous, the current handler is used. </summary>
+        [Required, YamlMember(Alias = "src"), JsonProperty("src")]
+        string Source { get; set; }
+        
+        /// <summary> MD5 hash of the file, used for verification. </summary>
+        string MD5 { get; set; }
+        
+        /// <summary> Version of the resource, if any.
+        ///           May also be a Release string.
+        ///           Currently only applies to mods. </summary>
+        string Version { get; set; }
+        
+        /// <summary> Destination (and sometimes relative
+        ///           source) path of the resource. </summary>
+        string Path { get; set; }
+        
+        /// <summary> Side of the resource. If not Both, it
+        ///           will be only be available on this side. </summary>
+        Side? Side { get; set; }
+    }
+    
     public class EntryResource
     {
         /// <summary> Name of the ISourceHandler to use for

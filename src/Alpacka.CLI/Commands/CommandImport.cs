@@ -18,6 +18,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Threading.Tasks;
 using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+using YamlDotNet.Serialization.NodeDeserializers;
 
 namespace Alpacka.CLI.Commands
 {
@@ -172,7 +174,9 @@ namespace Alpacka.CLI.Commands
                 
                 Directory.CreateDirectory(instancePath);
                 
-                var serializer = new Serializer();
+                var serializer = new SerializerBuilder()
+                    .WithNamingConvention(new CamelCaseNamingConvention())
+                    .Build();
                 File.WriteAllText(configPathFile, serializer.Serialize(modpack));
                 
                 var build = await CommandBuild.Build(modpack);
