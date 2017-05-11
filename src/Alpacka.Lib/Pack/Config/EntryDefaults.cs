@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
@@ -8,8 +9,11 @@ using YamlDotNet.Serialization;
 
 namespace Alpacka.Lib.Pack.Config
 {
-    public class EntryDefaults : ICollection<EntryDefaults.Group>
+    public class EntryDefaults : List<EntryDefaults.Group>
     {
+        public Group this[string name] =>
+            this.FirstOrDefault(group => (group.Name == name));
+        
         public EntryDefaults()
         {
             Add(new Group("mods") {
@@ -95,46 +99,5 @@ namespace Alpacka.Lib.Pack.Config
                 emitter.Emit(new MappingEnd());
             }
         }
-        
-        
-        // ICollection implementation
-        
-        private readonly Dictionary<string, Group> _dict =
-            new Dictionary<string, Group>();
-        
-        public int Count => _dict.Count;
-        bool ICollection<Group>.IsReadOnly => false;
-        
-        public Group this[string name] { get {
-            Group group;
-            return (_dict.TryGetValue(name, out group) ? group : null);
-        } }
-        
-        public void Add(Group group) =>
-            _dict[group.Name] = group;
-        
-        public bool Contains(Group group)
-        {
-            Group found;
-            return (_dict.TryGetValue(group.Name, out found) &&
-                    (found == group));
-        }
-        
-        public bool Remove(Group group)
-        {
-            Group found;
-            if (!_dict.TryGetValue(group.Name, out found) ||
-                (found != group)) return false;
-            _dict.Remove(group.Name);
-            return true;
-        }
-        
-        public void Clear() => _dict.Clear();
-        
-        public IEnumerator<Group> GetEnumerator() => _dict.Values.GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        
-        void ICollection<Group>.CopyTo(Group[] array, int arrayIndex) =>
-            _dict.Values.CopyTo(array, arrayIndex);
     }
 }
