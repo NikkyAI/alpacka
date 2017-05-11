@@ -94,7 +94,7 @@ namespace Alpacka.Lib.Curse
                         Name    = depAddon.Name,
                         Handler = Name,
                         Source  = dep.AddonId.ToString(),
-                        Version = Release.Latest.ToString(), // avoid crashes from listing files
+                        Version = Release.Recommended.ToString(), //TODO: apply same defaults to mod entry on callback
                         Side    = mod.Side,
                     };
                     _modToDependencyType[depMod] = dep.Type;
