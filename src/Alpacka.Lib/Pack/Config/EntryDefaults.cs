@@ -94,7 +94,7 @@ namespace Alpacka.Lib.Pack.Config
                 emitter.Emit(new MappingStart());
                 foreach (var group in (EntryDefaults)value) {
                     emitter.Emit(new Scalar(group.Name));
-                    ModpackConfig.Serializer.Serialize(emitter, value);
+                    ModpackConfig.Serializer.Serialize(emitter, group);
                 }
                 emitter.Emit(new MappingEnd());
             }

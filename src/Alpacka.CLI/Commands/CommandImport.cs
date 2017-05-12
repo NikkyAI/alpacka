@@ -18,6 +18,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Threading.Tasks;
 using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace Alpacka.CLI.Commands
 {
@@ -140,7 +141,6 @@ namespace Alpacka.CLI.Commands
                 {
                     async Task<EntryResource> processFile(PackFile file) 
                     {
-                        Console.WriteLine($"mod: { file.ProjectID } file: { file.FileID }");
                         var addon = await curseMeta.GetAddon(file.ProjectID);
                         var addonFile = await curseMeta.GetAddonFile(file.ProjectID, file.FileID);
                         var name = addon.Name.Trim();
@@ -172,8 +172,17 @@ namespace Alpacka.CLI.Commands
                 
                 Directory.CreateDirectory(instancePath);
                 
-                var serializer = new Serializer();
-                File.WriteAllText(configPathFile, serializer.Serialize(modpack));
+                //ModpackConfig.SaveYAML(instancePath, modpack);
+                
+                var serializer = new SerializerBuilder()
+                    .WithNamingConvention(new CamelCaseNamingConvention())
+                    .WithTypeConverter(new EntryDefaults.TypeConverter())
+                    .WithTypeConverter(new EntryIncludes.TypeConverter())
+                    .Build();
+                    
+                var yaml = serializer.Serialize(modpack);
+                System.Console.WriteLine($"{yaml}");
+                File.WriteAllText(instancePath, yaml);
                 
                 var build = await CommandBuild.Build(modpack);
                 
