@@ -137,29 +137,24 @@ namespace Alpacka.CLI.Commands
                 modGroup.Add(latestGroup);
                 modpack.Includes.Add(modGroup);
                 
-                using (var curseMeta = new CurseMeta())
+                async Task<EntryResource> processFile(PackFile file) 
                 {
-                    async Task<EntryMod> processFile(PackFile file) 
-                    {
-                        var addon = await curseMeta.GetAddon(file.ProjectID);
-                        var addonFile = await curseMeta.GetAddonFile(file.ProjectID, file.FileID);
-                        var name = addon.Name.Trim();
-                        var version = addonFile.FileName.Trim().TrimEnd(".jar".ToCharArray());
-                        Console.WriteLine($"mod: { file.ProjectID } file: { file.FileID } version: { version }");
-                        var resoure = new EntryMod {
-                            //Name = name,
-                            Source = name,
-                            Version = version
-                        };
-                        return resoure;
-                    }
-                    
-                    foreach (var f in manifest.Files) {
-                        var entry = await processFile(f);
-                        latestGroup.Add(entry);
-                        await Task.Delay(TimeSpan.FromSeconds(.1));
-                    }
+                    var addon = await CurseMeta.Instance.GetAddon(file.ProjectID);
+                    var addonFile = await CurseMeta.Instance.GetAddonFile(file.ProjectID, file.FileID);
+                    var name = addon.Name.Trim();
+                    var version = addonFile.FileName.Trim().TrimEnd(".jar".ToCharArray());
+                    Console.WriteLine($"mod: { file.ProjectID } file: { file.FileID } version: { version }");
+                    var resoure = new EntryMod {
+                        Name = name,
+                        Source = name,
+                        Version = version,
+                        Path = null
+                    };
+                    return resoure;
                 }
+                
+                latestGroup.AddRange(await Task.WhenAll(manifest.Files.Select(processFile)));
+                
                 modpack.Name = manifest.Name;
                 modpack.Authors = new List<string>();
                 modpack.Authors.Add(manifest.Author);
@@ -176,9 +171,10 @@ namespace Alpacka.CLI.Commands
                 
                 modpack.SaveYAML(instancePath);
                 
-                var build = await CommandBuild.Build(modpack);
+                var build = ModpackBuild.CopyFrom(modpack);
+                //await CommandBuild.Build(modpack);
                 
-                //TODO: build modpack and call instanceHandler Install
+                
                 instanceHandler.Install(instancePath, build);
                 
                 var info = new AlpackaInfo { InstanceType = instanceHandler.Name };
@@ -190,10 +186,15 @@ namespace Alpacka.CLI.Commands
                 
                 Directory.Delete(tempExtractPath, true);
                 
+                Console.WriteLine($"Created stub alpacka pack in { Path.GetFullPath(instancePath) }");
+                Console.WriteLine($"Edit { Constants.PACK_CONFIG_FILE } and run 'alpacka update'");
+                
                 //TODO: git init, gitignore etc..
                 
                 Repository.Init(instancePath);
                 
+                Console.WriteLine($"Initialized git repo in { Path.GetFullPath(instancePath) }");
+                Console.WriteLine($"Creating Initial commit, This could take a second...");
                 using (var repo = new Repository(instancePath))
                 {
                     LibGit2Sharp.Commands.Stage(repo, "*");
@@ -205,13 +206,20 @@ namespace Alpacka.CLI.Commands
                     Signature user = new Signature(name, email, DateTime.Now);
                     
                     // Commit to the repository
-                    Commit commit = repo.Commit($"Initial Commit\nPack generated from { argZip.Value }", user, user);
+                    var message = $"Initial Commit\nPack generated from { argZip.Value }";
+                    Commit commit = repo.Commit(message, user, user);
+                    
+                    Console.WriteLine($"Commit Message: \n{ message }");
+                    
+                    Console.WriteLine($"Created Inital Commit as");
+                    Console.WriteLine($"\tuser.name: { name }");
+                    Console.WriteLine($"\tuser.name: { email }");
                 }
                 
                 Console.WriteLine($"Created stub alpacka pack in { Path.GetFullPath(instancePath) }");
-                Console.WriteLine($"Edit { Constants.PACK_CONFIG_FILE } and run 'alpacka update'");
+                Console.WriteLine($"Edit { Constants.PACK_CONFIG_FILE } and run 'alpacka build' && 'alpacka update'");
                 
-                return 0;
+                return Program.Cleanup();
             });
         }
     }

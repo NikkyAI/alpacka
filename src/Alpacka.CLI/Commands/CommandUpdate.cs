@@ -235,7 +235,8 @@ namespace Alpacka.CLI.Commands
             Console.WriteLine("Downloading mods ...");
             await DownloadFiles(build.Mods, side, directory);
             
-            return 0;
+            
+            return Program.Cleanup();
         }
         
         public static async Task<ModpackBuild> GetBuild(string directory)

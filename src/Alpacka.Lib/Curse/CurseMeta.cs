@@ -23,7 +23,13 @@ namespace Alpacka.Lib.Curse
         
         private bool _disposed = false;
         
-        public CurseMeta() {
+        public static CurseMeta Instance { get; private set; }
+        
+        static CurseMeta() {
+            Instance = new CurseMeta();
+        }
+        
+        private CurseMeta() {
             _cache = new FileCache(Path.Combine(Constants.CachePath,"cursemeta"));
             _downloader = new FileDownloader(_cache);
         }
@@ -37,6 +43,13 @@ namespace Alpacka.Lib.Curse
             _disposed = true;
             _cache.Dispose();
             _downloader.Dispose();
+        }
+        
+        public static void DisposeInstance() {
+            if (Instance != null) {
+                Instance.Dispose();
+                Instance = null;
+            }
         }
         
         // Get Addon

@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using Microsoft.Extensions.CommandLineUtils;
 using Alpacka.CLI.Commands;
+using Alpacka.Lib.Curse;
 
 namespace Alpacka.CLI
 {
@@ -39,6 +40,11 @@ namespace Alpacka.CLI
                 ShowHelp();
                 return 0;
             }
+        }
+        
+        public static int Cleanup() {
+            CurseMeta.DisposeInstance();
+            return 0;
         }
     }
 }

@@ -30,7 +30,7 @@ namespace Alpacka.CLI.Commands
                     return 1;
                 }
                 
-                return 0;
+                return Program.Cleanup();
             });
         }
         

@@ -16,24 +16,10 @@ namespace Alpacka.Lib.Curse
             new ConcurrentDictionary<EntryMod, DependencyType>();
             
         private ProjectList _allProjects;
-        private CurseMeta curseMeta;
 
         public string Name => "Curse";
         
-        public async Task Initialize()
-        {
-            curseMeta = new CurseMeta();
-            _allProjects = await ProjectFeed.Get();
-        }
-        
-        ~ResourceHandlerCurse () {
-            Finish();
-        }
-        
-        public void Finish()
-        {
-            curseMeta.Dispose();  
-        }
+        public async Task Initialize() => _allProjects = await ProjectFeed.Get();
         
         public bool ShouldOverwriteHandler(string source) => false;
         
@@ -64,7 +50,7 @@ namespace Alpacka.Lib.Curse
                 Debug.WriteLine($"get full Addon info for { addonForId.Name }");
             }
             
-            var addon = await curseMeta.GetAddon(id);
+            var addon = await CurseMeta.Instance.GetAddon(id);
                 
             mod.Name        = mod.Name ?? addon.Name;
             mod.Description = mod.Description ?? addon.Summary;
@@ -74,7 +60,7 @@ namespace Alpacka.Lib.Curse
             mod.Links.Donations = mod.Links.Donations ?? addon.DonationUrl;
             
             
-            var fileId = await FindFileId(curseMeta, addon, mod, mcVersion, optional);
+            var fileId = await FindFileId(CurseMeta.Instance, addon, mod, mcVersion, optional);
             if (fileId == -1) {
                 if (optional) {
                     Debug.WriteLine($"no file found for { mod.Source } This is not a Error");
@@ -83,13 +69,13 @@ namespace Alpacka.Lib.Curse
                 } else throw new Exception($"No File of type 'Release' found for { mod.Name } in { mcVersion }");
             }
             
-            var fileInfo = await curseMeta.GetAddonFile(addon.Id, fileId);
+            var fileInfo = await CurseMeta.Instance.GetAddonFile(addon.Id, fileId);
             mod.Source = fileInfo.DownloadURL;
             mod.Path  = Path.Combine(mod.Path, fileInfo.FileNameOnDisk);
             
             foreach (var dep in fileInfo.Dependencies) {
                 if (dep.Type == DependencyType.Required) {
-                    var depAddon = await curseMeta.GetAddon(dep.AddonId);
+                    var depAddon = await CurseMeta.Instance.GetAddon(dep.AddonId);
                     var depMod = new EntryMod {
                         Name    = depAddon.Name,
                         Handler = Name,
@@ -101,13 +87,14 @@ namespace Alpacka.Lib.Curse
                     _modToDependencyType[depMod] = dep.Type;
                     addDependency(depMod);
                 } else if (dep.Type == DependencyType.Optional) {
-                    var depAddon = await curseMeta.GetAddon(dep.AddonId);
+                    var depAddon = await CurseMeta.Instance.GetAddon(dep.AddonId);
                     // TODO: Make this available in some form in the return value.
                     Console.WriteLine($"'{ mod.Name }' recommends using '{ depAddon.Name }'");
                 }
             }
             
             return mod;
+            
         }
         
         public async Task<int> FindFileId(CurseMeta curseMeta, Addon addon, EntryMod mod, string mcVersion, bool optional)
