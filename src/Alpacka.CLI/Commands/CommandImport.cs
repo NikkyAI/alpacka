@@ -139,14 +139,14 @@ namespace Alpacka.CLI.Commands
                 
                 using (var curseMeta = new CurseMeta())
                 {
-                    async Task<EntryResource> processFile(PackFile file) 
+                    async Task<EntryMod> processFile(PackFile file) 
                     {
                         var addon = await curseMeta.GetAddon(file.ProjectID);
                         var addonFile = await curseMeta.GetAddonFile(file.ProjectID, file.FileID);
                         var name = addon.Name.Trim();
                         var version = addonFile.FileName.Trim().TrimEnd(".jar".ToCharArray());
                         Console.WriteLine($"mod: { file.ProjectID } file: { file.FileID } version: { version }");
-                        var resoure = new EntryResource {
+                        var resoure = new EntryMod {
                             //Name = name,
                             Source = name,
                             Version = version
@@ -174,15 +174,7 @@ namespace Alpacka.CLI.Commands
                 
                 //ModpackConfig.SaveYAML(instancePath, modpack);
                 
-                var serializer = new SerializerBuilder()
-                    .WithNamingConvention(new CamelCaseNamingConvention())
-                    .WithTypeConverter(new EntryDefaults.TypeConverter())
-                    .WithTypeConverter(new EntryIncludes.TypeConverter())
-                    .Build();
-                    
-                var yaml = serializer.Serialize(modpack);
-                System.Console.WriteLine($"{yaml}");
-                File.WriteAllText(instancePath, yaml);
+                modpack.SaveYAML(instancePath);
                 
                 var build = await CommandBuild.Build(modpack);
                 

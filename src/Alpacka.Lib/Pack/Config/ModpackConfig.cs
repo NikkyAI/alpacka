@@ -11,7 +11,6 @@ namespace Alpacka.Lib.Pack.Config
     {
         internal static Serializer Serializer { get; } = new SerializerBuilder()
             .WithNamingConvention(new CamelCaseNamingConvention())
-            .WithTypeConverter(new EntryDefaults.TypeConverter())
             .WithTypeConverter(new EntryIncludes.TypeConverter())
             .Build();
         
@@ -20,7 +19,6 @@ namespace Alpacka.Lib.Pack.Config
             .WithNamingConvention(new CamelCaseNamingConvention())
             .WithNodeDeserializer(inner => new ValidatingNodeDeserializer(inner),
                                     s => s.InsteadOf<ObjectNodeDeserializer>())
-            .WithTypeConverter(new EntryDefaults.TypeConverter())
             .WithTypeConverter(new EntryIncludes.TypeConverter())
             .Build();
         
@@ -41,6 +39,19 @@ namespace Alpacka.Lib.Pack.Config
                 config = Deserializer.Deserialize<ModpackConfig>(reader);
             
             return config;
+        }
+        
+        
+        public void SaveYAML(string path)
+        {
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+            path = Path.Combine(path, Constants.PACK_CONFIG_FILE);
+            
+            using (var writer = new StreamWriter(File.OpenWrite(path)))
+            {
+                Serializer.Serialize(writer, this);
+            }
         }
     }
 }
