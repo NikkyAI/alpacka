@@ -105,7 +105,7 @@ namespace Alpacka.CLI.Commands
                     MissingMemberHandling = MissingMemberHandling.Ignore 
                 };
                 
-                //TODO: parse json
+                // parse json
                 var manifest = JsonConvert.DeserializeObject<PackManifest>(File.ReadAllText(Path.Combine(tempExtractPath, "manifest.json")), _settings);
                 
                 var safeName = string.Join("_", manifest.Name.Split(Path.GetInvalidPathChars()));
@@ -131,7 +131,7 @@ namespace Alpacka.CLI.Commands
                 var modpack = new ModpackConfig();
                 
                 
-                modpack.Includes = new EntryIncludes();
+                modpack.Includes = new EntryIncludes{ ForceMappingStyle = true };
                 var modGroup = new EntryIncludes.Group("mods");
                 var latestGroup = new EntryIncludes.Group("latest");
                 modGroup.Add(latestGroup);
@@ -145,7 +145,6 @@ namespace Alpacka.CLI.Commands
                     var version = addonFile.FileName.Trim().TrimEnd(".jar".ToCharArray());
                     Console.WriteLine($"mod: { file.ProjectID } file: { file.FileID } version: { version }");
                     var resoure = new EntryMod {
-                        Name = name,
                         Source = name,
                         Version = version,
                         Path = null
