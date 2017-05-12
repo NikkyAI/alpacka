@@ -128,7 +128,7 @@ namespace Alpacka.Lib.Pack.Config
                                 str += $" @ { resource.Version }";
                             emitter.Emit(new Scalar(str));
                         // Otherwise emit the full object.
-                        } else ModpackConfig.Serializer.Serialize(emitter, resource);
+                        } else ModpackConfig.ValueSerializer.SerializeValue(emitter, resource, resource.GetType());
                     }
                     emitter.Emit(new SequenceEnd());
                 }

@@ -13,6 +13,10 @@ namespace Alpacka.Lib.Pack.Config
             .WithNamingConvention(new CamelCaseNamingConvention())
             .WithTypeConverter(new EntryIncludes.TypeConverter())
             .Build();
+        internal static IValueSerializer ValueSerializer { get; } = new SerializerBuilder()
+            .WithNamingConvention(new CamelCaseNamingConvention())
+            .WithTypeConverter(new EntryIncludes.TypeConverter())
+            .BuildValueSerializer();
         
         internal static Deserializer Deserializer { get; } = new DeserializerBuilder()
             .IgnoreUnmatchedProperties()
