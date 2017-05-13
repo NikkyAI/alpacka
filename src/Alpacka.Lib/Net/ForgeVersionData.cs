@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using Alpacka.Lib.Pack;
+using Alpacka.Lib.Utility;
 
 namespace Alpacka.Lib.Net
 {
@@ -80,8 +81,12 @@ namespace Alpacka.Lib.Net
         {
             var promoStr = $"{ mcVersion }-{ releaseType.ToString().ToLowerInvariant() }";
             int buildNumber;
-            return Promotions.TryGetValue(promoStr, out buildNumber)
+            var forgeVersion = Promotions.TryGetValue(promoStr, out buildNumber)
                 ? this[(int)buildNumber] : null;
+            if(forgeVersion == null) {
+                forgeVersion = BuildVersions.Where(b => b.Value.MinecraftVersion == mcVersion).OrderBy(b => -b.Key).Select(b => b.Value).FirstOrDefault();
+            }
+            return forgeVersion;
         }
     }
     

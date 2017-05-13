@@ -88,12 +88,20 @@ Unless `--no-commit` is set, after the packbuild.json was written, this creates 
 ## `alpacka import`
 
 Imports a curse modpack and creates a alpacka pack from it
+find modpack names and IDs at [cursemeta.dries007.net](https://cursemeta.dries007.net/search#modpacks)
 
 | Required | Argument    | Description |
 |----------|-------------|-------------|
-| X        | `type`      | Instance Type to install. [Instance Types](#instance-types) |
-| X        | `zip`       | Url of the curse modpack download |
+| X        | `type`      | Instance Type to install. [Instance Types](#instance-types) can be `list` too, acts like `--list` |
+| X        | `project`   | Search term, id, url or filepathto find the modpack |
+| X        | `file`      | searhc term or id to find the file/version |
 
+Options
+
+| Short | Long          | Description |
+|-------|---------------|-------------|
+| `-l`  | `--list`      | Lists all files of a specific modpack |
+|       | `--mc`        | Filters files for minecraft version |
 
 ## `alpacka export`
 

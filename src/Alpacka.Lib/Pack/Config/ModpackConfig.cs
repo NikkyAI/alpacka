@@ -48,14 +48,12 @@ namespace Alpacka.Lib.Pack.Config
         
         public void SaveYAML(string path)
         {
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
+            Directory.CreateDirectory(path);
             path = Path.Combine(path, Constants.PACK_CONFIG_FILE);
             
             using (var writer = new StreamWriter(File.OpenWrite(path)))
-            {
                 Serializer.Serialize(writer, this);
-            }
+            
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Alpacka.Lib.Pack;
 using Alpacka.Lib.Resources;
+using Alpacka.Lib.Utility;
 
 namespace Alpacka.Lib.Curse
 {
@@ -19,7 +20,7 @@ namespace Alpacka.Lib.Curse
 
         public string Name => "Curse";
         
-        public async Task Initialize() => _allProjects = await ProjectFeed.Get();
+        public async Task Initialize() => _allProjects = await ProjectFeed.GetMods();
         
         public bool ShouldOverwriteHandler(string source) => false;
         
@@ -59,16 +60,18 @@ namespace Alpacka.Lib.Curse
             mod.Links.Source    = mod.Links.Source ?? addon.ExternalUrl;
             mod.Links.Donations = mod.Links.Donations ?? addon.DonationUrl;
             
-            
-            var fileId = await FindFileId(CurseMeta.Instance, addon, mod, mcVersion, optional);
-            if (fileId == -1) {
-                if (optional) {
-                    Debug.WriteLine($"no file found for { mod.Source } This is not a Error");
-                    return null; // We do not throw a error because its not required
-                // We should probably not reach this point ever:
-                } else throw new Exception($"No File of type 'Release' found for { mod.Name } in { mcVersion }");
+            int fileId = -1;
+            if(!(mod.Version.StartsWith("$:") && int.TryParse(mod.Version.CutStart("$:"), out fileId)))
+            {
+                fileId = await FindFileId(addon, mod, mcVersion, optional);
+                if (fileId == -1) {
+                    if (optional) {
+                        Debug.WriteLine($"no file found for { mod.Source } This is not a Error");
+                        return null; // We do not throw a error because its not required
+                    // We should probably not reach this point ever:
+                    } else throw new Exception($"No File of type 'Release' found for { mod.Name } in { mcVersion }");
+                }
             }
-            
             var fileInfo = await CurseMeta.Instance.GetAddonFile(addon.Id, fileId);
             mod.Source = fileInfo.DownloadURL;
             mod.Path  = Path.Combine(mod.Path, fileInfo.FileNameOnDisk);
@@ -97,14 +100,14 @@ namespace Alpacka.Lib.Curse
             
         }
         
-        public async Task<int> FindFileId(CurseMeta curseMeta, Addon addon, EntryMod mod, string mcVersion, bool optional)
+        public static async Task<int> FindFileId(Addon addon, EntryMod mod, string mcVersion, bool optional)
         {
             // Debug.WriteLine($"find file\n mcVersion: { mcVersion }\n name: { Addon.Name }"); // TODO: verbose logging
             // Debug.WriteLine($"Addon: { addon.ToPrettyJson() }"); // TODO: verbose logging
             
             if (string.Equals(mod.Version, Release.Recommended.ToString(), StringComparison.OrdinalIgnoreCase)) {
                 
-                var addonFiles = await curseMeta.GetAddonFiles(addon.Id);
+                var addonFiles = await CurseMeta.Instance.GetAddonFiles(addon.Id);
                 
                 var sorted = addonFiles.OrderBy(f => f.FileDate).ToList();
                 var recommendedFile = sorted.Find(file => (file.GameVersion.Contains(mcVersion) &&
@@ -123,7 +126,7 @@ namespace Alpacka.Lib.Curse
                 
             } else {
                 
-                var addonFiles = await curseMeta.GetAddonFiles(addon.Id);
+                var addonFiles = await CurseMeta.Instance.GetAddonFiles(addon.Id);
                 var sorted = addonFiles.OrderBy(f => f.FileDate).ToList();
                 
                 Debug.WriteLine($"mod.Name: { mod.Name } mcVersion: { mcVersion } mod.Version: { mod.Version }");

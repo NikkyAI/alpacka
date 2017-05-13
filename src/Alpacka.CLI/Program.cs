@@ -42,9 +42,9 @@ namespace Alpacka.CLI
             }
         }
         
-        public static int Cleanup() {
+        public static int Cleanup(int status = 0) {
             CurseMeta.DisposeInstance();
-            return 0;
+            return status;
         }
     }
 }

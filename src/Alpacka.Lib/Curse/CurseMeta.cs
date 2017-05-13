@@ -62,9 +62,16 @@ namespace Alpacka.Lib.Curse
         private async Task<Addon> GetAddonInternal(int addonId)
         {
             Debug.WriteLine($"getAddon { addonId }"); // TODO: verbose logging
-            var jsonFile = await _downloader.Download($"{ URL_BASE }/addon/{ addonId }/index.json", $"addon/{ addonId }/index.json");
-            var json = File.ReadAllText(jsonFile.FullPath);
-            return JsonConvert.DeserializeObject<Addon>(json, _settings);
+            var url = $"{ URL_BASE }/addon/{ addonId }/index.json";
+            try {
+                var jsonFile = await _downloader.Download(url, $"addon/{ addonId }/index.json");
+                var json = File.ReadAllText(jsonFile.FullPath);
+                return JsonConvert.DeserializeObject<Addon>(json, _settings);
+            } catch (Exception e) {
+                Console.WriteLine(url);
+                Console.WriteLine(e.Message);
+                throw e;
+            }
         }
         
         // Get Addon Description
@@ -109,9 +116,16 @@ namespace Alpacka.Lib.Curse
         private async Task<AddonFile> GetAddonFileInternal(int addonId, int fileId) 
         {
             Debug.WriteLine($"getAddonFile { addonId } { fileId }"); // TODO: verbose logging
-            var jsonFile = await _downloader.Download($"{ URL_BASE }/addon/{ addonId }/files/{ fileId }.json", $"addon/{ addonId }/files/{ fileId }.json");
-            var json = File.ReadAllText(jsonFile.FullPath);
-            return JsonConvert.DeserializeObject<AddonFile>(json, _settings);
+            var url = $"{ URL_BASE }/addon/{ addonId }/files/{ fileId }.json";
+            try {
+                var jsonFile = await _downloader.Download(url, $"addon/{ addonId }/files/{ fileId }.json");
+                var json = File.ReadAllText(jsonFile.FullPath);
+                return JsonConvert.DeserializeObject<AddonFile>(json, _settings);
+            } catch (Exception e) {
+                Console.WriteLine(url);
+                Console.WriteLine(e.Message);
+                throw e;
+            }
         }
         
         // Get Addon File Changelog
