@@ -9,31 +9,34 @@ using YamlDotNet.Serialization;
 
 namespace Alpacka.Lib.Pack.Config
 {
-    public class EntryDefaults : List<EntryDefaults.Group>
-    {
-        public Group this[string name] =>
-            this.FirstOrDefault(group => (group.Name == name));
+    public class EntryDefaults : Dictionary<string, EntryDefaults.Group>
+    {        
+        new public void Add(string name, Group group) {
+            group.Name = name;
+            base.Add(name, group);
+        }
         
         public EntryDefaults()
         {
-            Add(new Group("mods") {
+            Add("mods", new Group() {
                 Path = "mods",
                 Handler = "curse",
                 Version = Release.Recommended
             });
-            Add(new Group("config") {
+            
+            Add("config", new Group() {
                 Path = "config",
                 Handler = "file"
             });
             
-            Add(new Group("client") { Side = Side.Client });
-            Add(new Group("server") { Side = Side.Server });
+            Add("client", new Group() { Side = Side.Client });
+            Add("server", new Group() { Side = Side.Server });
             
-            Add(new Group("curse") { Handler = "Curse" });
-            Add(new Group("github") { Handler = "GitHub" });
+            Add("curse", new Group() { Handler = "Curse" }); //TODO: get string from resource handler
+            Add("github", new Group() { Handler = "GitHub" });
             
-            Add(new Group("recommended") { Version = Release.Recommended });
-            Add(new Group("latest") { Version = Release.Latest });
+            Add("recommended", new Group() { Version = Release.Recommended });
+            Add("latest", new Group() { Version = Release.Latest });
         }
         
         
@@ -68,36 +71,6 @@ namespace Alpacka.Lib.Pack.Config
                 Path    = right?.Path ?? left?.Path,
                 Side    = right?.Side ?? left?.Side
             };
-        }
-        
-        
-        public class TypeConverter : IYamlTypeConverter
-        {
-            public bool Accepts(Type type) =>
-                typeof(EntryDefaults).GetTypeInfo().IsAssignableFrom(type);
-            
-            public object ReadYaml(IParser parser, Type type)
-            {
-                var groups = ModpackConfig.Deserializer
-                    .Deserialize<Dictionary<string, Group>>(parser);
-                var defaults = new EntryDefaults();
-                foreach (var pair in groups) {
-                    var group  = pair.Value;
-                    group.Name = pair.Key;
-                    defaults.Add(group);
-                }
-                return defaults;
-            }
-            
-            public void WriteYaml(IEmitter emitter, object value, Type type)
-            {
-                emitter.Emit(new MappingStart());
-                foreach (var group in (EntryDefaults)value) {
-                    emitter.Emit(new Scalar(group.Name));
-                    ModpackConfig.Serializer.Serialize(emitter, value);
-                }
-                emitter.Emit(new MappingEnd());
-            }
         }
     }
 }

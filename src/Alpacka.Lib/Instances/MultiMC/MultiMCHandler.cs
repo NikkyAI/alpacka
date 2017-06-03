@@ -41,6 +41,14 @@ namespace Alpacka.Lib.Instances.MultiMC
             cfg.Config["notes"] = pack.Description;
             cfg.Config["IntendedVersion"] = pack.MinecraftVersion;
             cfg.Config["InstanceType"] = "OneSix";
+            
+            var icon = Path.Combine(instancePath, "icon.png");
+            if(File.Exists(icon)) {
+                var iconKey = Path.GetFileNameWithoutExtension($"icon_{pack.Name.Replace('.','_')}");
+                File.Copy(icon, Path.Combine(_config.IconsPath, iconKey), true);
+                cfg.Config["iconKey"] = iconKey;
+            }
+            
             cfg.Save();
             
             // TODO: Add to instance group.
@@ -74,6 +82,10 @@ namespace Alpacka.Lib.Instances.MultiMC
             [YamlIgnore]
             public string InstancesPath => 
                 Path.Combine(MultiMCPath, _cfg.Config["InstanceDir"]);
+                
+            [YamlIgnore]
+            public string IconsPath => 
+                Path.Combine(MultiMCPath, _cfg.Config["IconsDir"]);
             
             public static Config Load() => Load<Config>("multimc");
         }

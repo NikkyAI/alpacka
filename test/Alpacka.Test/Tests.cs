@@ -30,16 +30,19 @@ namespace Alpacka.Test
         [Fact]
         public async void DownloadCurse()
         {
-            await Task.WhenAll(
-                CurseMeta.GetAddon(223008),
-                CurseMeta.GetAddon(257572),
-                CurseMeta.GetAddonDescription(257572),
-                CurseMeta.GetAddonDescription(223008),
-                CurseMeta.GetAddonFiles(257572),
-                CurseMeta.GetAddonFiles(223008),
-                CurseMeta.GetAddonFile(257572, 2382299),
-                CurseMeta.GetAddonFileChangelog(257572, 2382299)
-            );
+            using (var curseMeta = new CurseMeta())
+            {
+                await Task.WhenAll(
+                    curseMeta.GetAddon(223008),
+                    curseMeta.GetAddon(257572),
+                    curseMeta.GetAddonDescription(257572),
+                    curseMeta.GetAddonDescription(223008),
+                    curseMeta.GetAddonFiles(257572),
+                    curseMeta.GetAddonFiles(223008),
+                    curseMeta.GetAddonFile(257572, 2382299),
+                    curseMeta.GetAddonFileChangelog(257572, 2382299)
+                );
+            }
         }
         
         [Fact]
@@ -50,36 +53,38 @@ namespace Alpacka.Test
             var latest = await ProjectFeed.Get();
             var rnd = new Random();
             var randomData = latest.Data.OrderBy(x => rnd.Next()).ToList();
-            
-            async Task TestAddon(Addon addon)
+            using (var curseMeta = new CurseMeta())
             {
-                var realAddon = await CurseMeta.GetAddon(addon.Id);
-                Assert.Equal(addon.Status, realAddon.Status);
-                Assert.Equal(addon.Stage, realAddon.Stage);
-                Assert.Equal(addon.PackageType, realAddon.PackageType);
-                for (int i = 0; i < addon.GameVersionLatestFiles.Length; i++)
-                    Assert.Equal(addon.GameVersionLatestFiles[i].FileType, realAddon.GameVersionLatestFiles[i].FileType);
-                
-                foreach (var file in addon.LatestFiles) {
-                    var realFile = await CurseMeta.GetAddonFile(addon.Id, file.Id);
-                    for (int i = 0; i < file.Dependencies.Length; i++)
-                        Assert.Equal(file.Dependencies[i].Type, realFile.Dependencies[i].Type);
+                async Task TestAddon(Addon addon)
+                {
+                    var realAddon = await curseMeta.GetAddon(addon.Id);
+                    Assert.Equal(addon.Status, realAddon.Status);
+                    Assert.Equal(addon.Stage, realAddon.Stage);
+                    Assert.Equal(addon.PackageType, realAddon.PackageType);
+                    for (int i = 0; i < addon.GameVersionLatestFiles.Length; i++)
+                        Assert.Equal(addon.GameVersionLatestFiles[i].FileType, realAddon.GameVersionLatestFiles[i].FileType);
                     
-                    Assert.Equal(file.FileStatus, realFile.FileStatus);
-                    Assert.Equal(file.ReleaseType, realFile.ReleaseType);
+                    foreach (var file in addon.LatestFiles) {
+                        var realFile = await curseMeta.GetAddonFile(addon.Id, file.Id);
+                        for (int i = 0; i < file.Dependencies.Length; i++)
+                            Assert.Equal(file.Dependencies[i].Type, realFile.Dependencies[i].Type);
+                        
+                        Assert.Equal(file.FileStatus, realFile.FileStatus);
+                        Assert.Equal(file.ReleaseType, realFile.ReleaseType);
+                    }
                 }
-            }
-            
-            // Test with 100 random Addons.
-            
-            var batchSize = 10;
-            var all = randomData.Take(100)
-                .Select((addon, index) => new { addon, index })
-                .GroupBy(e => (e.index / batchSize), e => e.addon);
-            
-            foreach (var batch in all) {
-                await Task.WhenAll(batch.Select(TestAddon));
-                await Task.Delay(TimeSpan.FromSeconds(2));
+                
+                // Test with 100 random Addons.
+                
+                var batchSize = 10;
+                var all = randomData.Take(100)
+                    .Select((addon, index) => new { addon, index })
+                    .GroupBy(e => (e.index / batchSize), e => e.addon);
+                
+                foreach (var batch in all) {
+                    await Task.WhenAll(batch.Select(TestAddon));
+                    await Task.Delay(TimeSpan.FromSeconds(2));
+                }
             }
         }
         
